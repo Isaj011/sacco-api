@@ -46,39 +46,36 @@ if (process.env.NODE_ENV === 'development') {
 // File uploading
 app.use(fileupload())
 
-// Enable CORS for Vercel deployment
-if (process.env.NODE_ENV === 'production') {
-  app.use(allowCors)
-} else {
-  // Use regular CORS for development
-  const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
-  const corsOptions = {
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-      'Origin',
-      'Access-Control-Request-Method',
-      'Access-Control-Request-Headers'
-    ],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204
-  };
-  app.use(cors(corsOptions));
-  app.options('*', cors(corsOptions));
-}
+// Enable CORS for all environments
+const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')))

@@ -33,10 +33,26 @@ const app = express()
 
 // Enable CORS with specific options
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  maxAge: 86400 // 24 hours
 }))
+
+// Handle preflight requests
+app.options('*', cors())
 
 //body parser
 app.use(express.json())

@@ -8,10 +8,17 @@ const cookieParser = require('cookie-parser')
 const errorHandler = require('./middleware/error')
 const connectDB = require('./config/db')
 const cors = require('cors')
+const mongoose = require('mongoose')
 
 //Load env vars
-
 dotenv.config({ path: './config/config.env' })
+
+// Debug logging
+console.log('Environment Variables Debug:')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('PORT:', process.env.PORT)
+console.log('MONGO_URI exists:', !!process.env.MONGO_URI)
+console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
 
 //connect to database
 connectDB()
@@ -24,8 +31,12 @@ const users = require('./routes/users')
 
 const app = express()
 
-// Enable CORS
-app.use(cors()) // Add this line
+// Enable CORS with specific options
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 
 //body parser
 app.use(express.json())
@@ -35,8 +46,9 @@ app.use(express.json())
 
 // Cookie parser
 app.use(cookieParser())
+
 //dev logging middleware
-if ((process.env.NODE_ENV = 'development')) {
+if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
@@ -46,26 +58,68 @@ app.use(fileupload())
 //set static folder
 app.use(express.static(path.join(__dirname, 'public')))
 
-//mount routers
-app.use('/api/v1/vehicles', vehicles)
-app.use('/api/v1/courses', courses)
-app.use('/api/v1/auth', auth)
-app.use('/api/v1/users', users)
+// Debug route with enhanced MongoDB status
+app.get('/debug', async (req, res) => {
+  let mongoStatus = 'Not Connected';
+  let mongoError = null;
+  
+  try {
+    // Check MongoDB connection
+    const dbState = mongoose.connection.readyState;
+    mongoStatus = dbState === 1 ? 'Connected' : 'Not Connected';
+    
+    // Try to connect if not connected
+    if (dbState !== 1) {
+      console.log('Attempting to reconnect to MongoDB...');
+      await connectDB();
+      mongoStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Not Connected';
+    }
+  } catch (err) {
+    mongoStatus = 'Error';
+    mongoError = err.message;
+    console.error('MongoDB connection error:', err);
+  }
+
+  res.json({
+    environment: process.env.NODE_ENV,
+    mongoConnected: mongoStatus,
+    mongoError: mongoError,
+    jwtConfigured: !!process.env.JWT_SECRET,
+    uploadPath: process.env.FILE_UPLOAD_PATH,
+    envVars: {
+      nodeEnv: process.env.NODE_ENV,
+      port: process.env.PORT,
+      mongoUriExists: !!process.env.MONGO_URI,
+      mongoUriLength: process.env.MONGO_URI ? process.env.MONGO_URI.length : 0,
+      jwtSecretExists: !!process.env.JWT_SECRET,
+      smtpHostExists: !!process.env.SMTP_HOST,
+      fileUploadPathExists: !!process.env.FILE_UPLOAD_PATH
+    },
+    timestamp: new Date().toISOString()
+  })
+})
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'API is running',
+    environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   })
 })
+
+//mount routers
+app.use('/api/v1/vehicles', vehicles)
+app.use('/api/v1/courses', courses)
+app.use('/api/v1/auth', auth)
+app.use('/api/v1/users', users)
 
 app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000
 
-app.listen(
+const server = app.listen(
   PORT,
   console.log(
     `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.rainbow
@@ -73,9 +127,10 @@ app.listen(
   )
 )
 
-// //handle unhandled promise  rejections
-// process.on('unhandledRejection', (err, promise)=>{
-//   console.log(`Error: ${err.message}`)
-//   //close server & exit process
-//   server.close(()=> process.exit(1))
-// })
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+  console.log('Error:', err.message)
+  console.log('Full error:', err)
+  // Close server & exit process
+  server.close(() => process.exit(1))
+})

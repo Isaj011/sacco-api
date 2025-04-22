@@ -9,6 +9,7 @@ const errorHandler = require('./middleware/error')
 const connectDB = require('./config/db')
 const cors = require('cors')
 const mongoose = require('mongoose')
+const allowCors = require('./middleware/cors')
 
 //Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -31,60 +32,55 @@ const users = require('./routes/users')
 
 const app = express()
 
-const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
-
-// CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
-
-// Apply CORS middleware before any routes
-app.use(cors(corsOptions));
-
-// Handle preflight requests for all routes
-app.options('*', cors(corsOptions));
-
-//body parser
-app.use(express.json())
-
-//body parser
+// Body parser
 app.use(express.json())
 
 // Cookie parser
 app.use(cookieParser())
 
-//dev logging middleware
+// Dev logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
-//file uploading
+// File uploading
 app.use(fileupload())
 
-//set static folder
+// Enable CORS for Vercel deployment
+if (process.env.NODE_ENV === 'production') {
+  app.use(allowCors)
+} else {
+  // Use regular CORS for development
+  const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers'
+    ],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  };
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
+}
+
+// Set static folder
 app.use(express.static(path.join(__dirname, 'public')))
 
 // Debug route with enhanced MongoDB status

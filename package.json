@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "NODE_ENV=production node server",
+    "start": "node server",
     "dev": "nodemon server"
   },
   "author": "jaybantu",

@@ -47,7 +47,11 @@ if (process.env.NODE_ENV === 'development') {
 app.use(fileupload())
 
 // Enable CORS for all environments
-const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
+  'https://fare-rari.netlify.app'
+];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);

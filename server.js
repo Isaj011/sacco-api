@@ -33,7 +33,7 @@ const app = express()
 
 // Enable CORS with specific options
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'],
+  origin: ['*','http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',

@@ -32,24 +32,40 @@ const users = require('./routes/users')
 const app = express()
 
 // Enable CORS with specific options
+// app.use(cors({
+//   origin: ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'],
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: [
+//     'Content-Type',
+//     'Authorization',
+//     'X-Requested-With',
+//     'Accept',
+//     'Origin',
+//     'Access-Control-Request-Method',
+//     'Access-Control-Request-Headers'
+//   ],
+//   exposedHeaders: ['Content-Range', 'X-Content-Range'],
+//   credentials: true,
+//   preflightContinue: false,
+//   optionsSuccessStatus: 204,
+//   maxAge: 86400 // 24 hours
+// }))
+
+const allowedOrigins = ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://sacco-3mhcvjas5-isajs-projects.vercel.app'],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  preflightContinue: false,
   optionsSuccessStatus: 204,
-  maxAge: 86400 // 24 hours
-}))
+}));
 
 // Handle preflight requests
 app.options('*', cors())

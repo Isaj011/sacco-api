@@ -1,85 +1,122 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
+// Stop schema to hold information about each stop in a course
+const StopSchema = new mongoose.Schema({
+  stopId: String,
+  stopName: String,
+  stopOrder: Number,
+  estimatedTime: String, // ISO 8601 format
+  coordinates: {
+    latitude: Number,
+    longitude: Number,
+  },
+  isTerminal: Boolean,
+  waitingTime: Number,
+});
+
+// Schedule schema to hold information about the schedule for a course
+const ScheduleSchema = new mongoose.Schema({
+  startTime: String,
+  endTime: String,
+  frequency: Number,
+  isActive: Boolean,
+});
+
+// Fare schema to hold information about fare calculations for a course
+const FareSchema = new mongoose.Schema({
+  baseFare: Number,
+  distanceFare: Number,
+  peakHourMultiplier: Number,
+  discountPercentage: Number,
+});
+
+// Performance schema to hold data on performance metrics for a course
+const PerformanceSchema = new mongoose.Schema({
+  averageSpeed: Number,
+  onTimePercentage: Number,
+  passengerSatisfaction: Number,
+  totalTrips: Number,
+});
+
+// AssignedVehicle schema to link vehicle details with the course
+const AssignedVehicleSchema = new mongoose.Schema({
+  vehicleId: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Vehicle', // Reference to the Vehicle model, ensure this is correct
+  },
+  plateNumber: String,
+  model: String,
+  driverName: String,
+  seatingCapacity: Number,
+});
+
+// Main Course schema that references other sub-schemas
 const CourseSchema = new mongoose.Schema({
-  route: {
+  routeName: {
     type: String,
     trim: true,
-    required: [true, 'Please ass the route name'],
+    required: [true, 'Please add the route name'],
+  },
+  routeNumber: {
+    type: String,
   },
   description: {
     type: String,
-    required: [true, 'please add a description'],
+    required: [false, 'Please add a description'],
   },
-  distance: {
+  totalDistance: {
     type: Number,
-    required: [true, 'please ass the total distance'],
+    required: [true, 'Please add the total distance'],
   },
-  startLocation: {
-    type:String,
-    required:true
-    //GeoJSON point'
-    // type: {
-    //   type: String,
-    //   // enum: ['Point'],
-    //   required: true,
-    // },
-    // coordinates: {
-    //   type: [Number],
-    //   required: true,
-    //   index: '2dsphere',
-    // },
-    // formattedAddres: String,
-    // street: String,
-    // city: String,
-    // state: String,
-    // zipcode: String,
-    // country: String,
+  estimatedDuration: {
+    type: String, // changed from Number to String
+    required: [true, 'Estimated duration is required'],
   },
-  endLocation: {
-    type:String,
-    required:true
-    //GeoJSON point'
-    // type: {
-    //   type: String,
-    //   // enum: ['Point'],
-    //   required: true,
-    // },
-    // coordinates: {
-    //   type: [Number],
-    //   required: true,
-    //   index: '2dsphere',
-    // },
-    // formattedAddres: String,
-    // street: String,
-    // city: String,
-    // state: String,
-    // zipcode: String,
-    // country: String,
+  stops: [StopSchema], // Array of stops for the course
+  schedule: ScheduleSchema, // Schedule for the course
+  fare: FareSchema, // Fare structure for the course
+  status: {
+    type: String,
+    enum: ['Active', 'Inactive', 'Maintenance', 'Suspended'],
+    default: 'Active',
   },
- 
-  stops:{
-    type:String
+  lastUpdated: {
+    type: Date,
+    default: Date.now,
   },
-  vehiclesAssigned:{
-    type:Number,
-    required:[true, 'please specify the number of vehicles assigned']
+  currentPassengers: Number,
+  maxCapacity: Number,
+  currentLocation: {
+    latitude: Number,
+    longitude: Number,
+    lastUpdated: String,
   },
-  createdAt:{
-    type:Date,
-    default:Date.now
+  performance: PerformanceSchema, // Performance metrics
+  assignedVehicles: [AssignedVehicleSchema], // Vehicles assigned to the course
+  totalPassengersFerried: {
+    type: Number,
+    default: 0,
   },
-  vehicle:{
-    type:mongoose.Schema.ObjectId,
-    ref:'Vehicle',
-    required:true
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
-  user:{
-    type:mongoose.Schema.ObjectId,
-    ref:'User',
-    required:true
-  }
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    required: true, // Ensure this is correct, as 'User' model must exist
+  },
+});
 
-})
+// Ensure that assignedVehicles.vehicleId is populated when fetching Course data
+CourseSchema.pre('find', function(next) {
+  this.populate('assignedVehicles.vehicleId', 'plateNumber model seatingCapacity'); // Specify which fields to populate
+  next();
+});
 
+CourseSchema.pre('findOne', function(next) {
+  this.populate('assignedVehicles.vehicleId', 'plateNumber model seatingCapacity'); // Specify which fields to populate
+  next();
+});
 
-module.exports = mongoose.model('Course', CourseSchema) 
+module.exports = mongoose.model('Course', CourseSchema);

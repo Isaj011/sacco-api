@@ -1,52 +1,53 @@
 const advancedResults = (model, populate) => async (req, res, next) => {
-  let query
+  let query;
 
-  //copy req.query
-  const reqQuery = { ...req.query }
+  // Copy req.query
+  const reqQuery = { ...req.query };
 
-  //fields to exclude
-  const removeFields = ['select', 'sort']
+  // Fields to exclude
+  const removeFields = ['select', 'sort'];
 
-  //loop over removeFields and delete them from reqQuery
-  removeFields.forEach(param => delete reqQuery[param])
+  // Loop over removeFields and delete them from reqQuery
+  removeFields.forEach(param => delete reqQuery[param]);
 
-  //create query string
-  let queryStr = JSON.stringify(reqQuery)
+  // Create query string
+  let queryStr = JSON.stringify(reqQuery);
 
-  //create operates ($gt,$gte, etc)
-  queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`)
+  // Create operators ($gt,$gte, etc)
+  queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
 
-  //Finding resource
-  query = model.find(JSON.parse(queryStr))
+  // Finding resource
+  query = model.find(JSON.parse(queryStr));
 
-  //select fields
+  // Select fields
   if (req.query.select) {
-    const fields = req.query.select.split(',').join(' ')
-    query = query.select(fields)
+    const fields = req.query.select.split(',').join(' ');
+    query = query.select(fields);
   }
 
-  //sort
+  // Sort
   if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ')
-    query = query.sort(sortBy)
+    const sortBy = req.query.sort.split(',').join(' ');
+    query = query.sort(sortBy);
   } else {
-    query = query.sort('-createdAt')
+    query = query.sort('-createdAt');
   }
 
+  // Populate if provided
   if (populate) {
-    query = query.populate(populate)
+    query = query.populate(populate);
   }
 
-  //Executing query
-  const results = await query
+  // Execute query
+  const results = await query;
 
   res.advancedResults = {
     success: true,
     count: results.length,
     data: results,
-  }
+  };
 
-  next()
-}
+  next();
+};
 
-module.exports = advancedResults
+module.exports = advancedResults;

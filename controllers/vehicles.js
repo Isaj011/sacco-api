@@ -28,20 +28,81 @@ exports.getVehicle = asyncHandler(async (req, res, next) => {
 // @route     POST  /api/v1/vehicles
 // @access    Private
 exports.createVehicle = asyncHandler(async (req, res, next) => {
-  //Add User to req.body
+  // Add User to req.body
   req.body.user = req.user.id
 
-  //check for listed vehicles
+  // Check for listed vehicles
   const listedVehicle = await Vehicle.findOne({ user: req.user.id })
 
-  // if user is not admin, they can only add one vehicle
-
+  // If user is not admin, they can only add one vehicle
   if (listedVehicle && req.user.role !== 'admin') {
     return next(
       new ErrorResponse(
         `The user with id ${req.user.id} has already listed a vehicle`,
         400
       )
+    )
+  }
+
+  // Validate required fields
+  const requiredFields = [
+    'plateNumber',
+    'vehicleModel',
+    'vehicleCondition',
+    'driverName',
+    'seatingCapacity',
+    'assignedRoute',
+    'averageSpeed',
+    'estimatedArrivalTime'
+  ]
+
+  for (const field of requiredFields) {
+    if (!req.body[field]) {
+      return next(
+        new ErrorResponse(`Please provide ${field}`, 400)
+      )
+    }
+  }
+
+  // Validate numeric fields
+  const numericFields = [
+    'seatingCapacity',
+    'averageSpeed',
+    'totalPassengersFerried',
+    'averageDailyIncome',
+    'totalIncome',
+    'totalTrips',
+    'mileage'
+  ]
+
+  for (const field of numericFields) {
+    if (req.body[field] && isNaN(req.body[field])) {
+      return next(
+        new ErrorResponse(`${field} must be a number`, 400)
+      )
+    }
+  }
+
+  // Validate vehicle condition
+  const validConditions = ['Excellent', 'Good', 'Fair', 'Poor', 'Maintenance']
+  if (req.body.vehicleCondition && !validConditions.includes(req.body.vehicleCondition)) {
+    return next(
+      new ErrorResponse(`Invalid vehicle condition. Must be one of: ${validConditions.join(', ')}`, 400)
+    )
+  }
+
+  // Validate fuel type
+  const validFuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid']
+  if (req.body.fuelType && !validFuelTypes.includes(req.body.fuelType)) {
+    return next(
+      new ErrorResponse(`Invalid fuel type. Must be one of: ${validFuelTypes.join(', ')}`, 400)
+    )
+  }
+
+  // Validate assignedRoute length
+  if (req.body.assignedRoute && req.body.assignedRoute.length > 100) {
+    return next(
+      new ErrorResponse('Route name cannot be longer than 100 characters', 400)
     )
   }
 
@@ -73,6 +134,48 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
     )
   }
 
+  // Validate numeric fields if provided
+  const numericFields = [
+    'seatingCapacity',
+    'averageSpeed',
+    'totalPassengersFerried',
+    'averageDailyIncome',
+    'totalIncome',
+    'totalTrips',
+    'mileage'
+  ]
+
+  for (const field of numericFields) {
+    if (req.body[field] && isNaN(req.body[field])) {
+      return next(
+        new ErrorResponse(`${field} must be a number`, 400)
+      )
+    }
+  }
+
+  // Validate vehicle condition if provided
+  const validConditions = ['Excellent', 'Good', 'Fair', 'Poor', 'Maintenance']
+  if (req.body.vehicleCondition && !validConditions.includes(req.body.vehicleCondition)) {
+    return next(
+      new ErrorResponse(`Invalid vehicle condition. Must be one of: ${validConditions.join(', ')}`, 400)
+    )
+  }
+
+  // Validate fuel type if provided
+  const validFuelTypes = ['Petrol', 'Diesel', 'Electric', 'Hybrid']
+  if (req.body.fuelType && !validFuelTypes.includes(req.body.fuelType)) {
+    return next(
+      new ErrorResponse(`Invalid fuel type. Must be one of: ${validFuelTypes.join(', ')}`, 400)
+    )
+  }
+
+  // Validate assignedRoute length if provided
+  if (req.body.assignedRoute && req.body.assignedRoute.length > 100) {
+    return next(
+      new ErrorResponse('Route name cannot be longer than 100 characters', 400)
+    )
+  }
+
   vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -80,7 +183,7 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: vehicle })
 })
 // @desc      delete vehicle
-// @route     POST  /api/v1/vehicles/:id
+// @route     DELETE  /api/v1/vehicles/:id
 // @access    Private
 exports.deleteVehicle = asyncHandler(async (req, res, next) => {
   let vehicle = await Vehicle.findById(req.params.id)
@@ -100,7 +203,7 @@ exports.deleteVehicle = asyncHandler(async (req, res, next) => {
       )
     )
   }
-  vehicle = await Vehicle.findByIdAndDelete(req.params.id)
+  await vehicle.deleteOne()
  
   // vehicle.remove()
 

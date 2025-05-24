@@ -59,6 +59,9 @@ const CourseSchema = new mongoose.Schema({
   },
   routeNumber: {
     type: String,
+    required: [true, 'Please add route number'],
+    unique: true,
+    trim: true
   },
   description: {
     type: String,
@@ -69,12 +72,21 @@ const CourseSchema = new mongoose.Schema({
     required: [true, 'Please add the total distance'],
   },
   estimatedDuration: {
-    type: String, // changed from Number to String
+    type: String,
     required: [true, 'Estimated duration is required'],
   },
-  stops: [StopSchema], // Array of stops for the course
-  schedule: ScheduleSchema, // Schedule for the course
-  fare: FareSchema, // Fare structure for the course
+  stops: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'Stop'
+  }],
+  schedule: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Schedule'
+  },
+  fare: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Fare'
+  },
   status: {
     type: String,
     enum: ['Active', 'Inactive', 'Maintenance', 'Suspended'],
@@ -84,38 +96,62 @@ const CourseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  currentPassengers: Number,
-  maxCapacity: Number,
+  currentPassengers: {
+    type: Number,
+    default: 0
+  },
+  maxCapacity: {
+    type: Number,
+    required: [true, 'Please add maximum capacity']
+  },
   currentLocation: {
     latitude: Number,
     longitude: Number,
     lastUpdated: String,
   },
-  performance: PerformanceSchema, // Performance metrics
-  assignedVehicles: [AssignedVehicleSchema], // Vehicles assigned to the course
+  performance: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Performance'
+  },
+  assignedVehicles: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'AssignedVehicle'
+  }],
   totalPassengersFerried: {
     type: Number,
     default: 0,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
-    required: true, // Ensure this is correct, as 'User' model must exist
-  },
+    required: true,
+  }
+}, {
+  timestamps: true
 });
 
-// Ensure that assignedVehicles.vehicleId is populated when fetching Course data
+// Populate middleware
 CourseSchema.pre('find', function(next) {
-  this.populate('assignedVehicles.vehicleId', 'plateNumber model seatingCapacity'); // Specify which fields to populate
+  this.populate([
+    { path: 'stops' },
+    { path: 'schedule' },
+    { path: 'fare' },
+    { path: 'performance' },
+    { path: 'assignedVehicles' },
+    { path: 'user', select: 'name email' }
+  ]);
   next();
 });
 
 CourseSchema.pre('findOne', function(next) {
-  this.populate('assignedVehicles.vehicleId', 'plateNumber model seatingCapacity'); // Specify which fields to populate
+  this.populate([
+    { path: 'stops' },
+    { path: 'schedule' },
+    { path: 'fare' },
+    { path: 'performance' },
+    { path: 'assignedVehicles' },
+    { path: 'user', select: 'name email' }
+  ]);
   next();
 });
 

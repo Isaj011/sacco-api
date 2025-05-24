@@ -29,6 +29,11 @@ const vehicles = require('./routes/vehicles')
 const courses = require('./routes/courses')
 const auth = require('./routes/auth')
 const users = require('./routes/users')
+const stops = require('./routes/stops')
+const schedules = require('./routes/schedules')
+const fares = require('./routes/fares')
+const performances = require('./routes/performances')
+const assignedVehicles = require('./routes/assignedVehicles')
 
 const app = express()
 
@@ -140,6 +145,11 @@ app.use('/api/v1/vehicles', vehicles)
 app.use('/api/v1/courses', courses)
 app.use('/api/v1/auth', auth)
 app.use('/api/v1/users', users)
+app.use('/api/stops', stops)
+app.use('/api/schedules', schedules)
+app.use('/api/fares', fares)
+app.use('/api/performances', performances)
+app.use('/api/assigned-vehicles', assignedVehicles)
 
 app.use(errorHandler)
 

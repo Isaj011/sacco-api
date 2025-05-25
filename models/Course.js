@@ -38,18 +38,6 @@ const PerformanceSchema = new mongoose.Schema({
   totalTrips: Number,
 });
 
-// AssignedVehicle schema to link vehicle details with the course
-const AssignedVehicleSchema = new mongoose.Schema({
-  vehicleId: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Vehicle', // Reference to the Vehicle model, ensure this is correct
-  },
-  plateNumber: String,
-  model: String,
-  driverName: String,
-  seatingCapacity: Number,
-});
-
 // Main Course schema that references other sub-schemas
 const CourseSchema = new mongoose.Schema({
   routeName: {
@@ -115,7 +103,7 @@ const CourseSchema = new mongoose.Schema({
   },
   assignedVehicles: [{
     type: mongoose.Schema.ObjectId,
-    ref: 'AssignedVehicle'
+    ref: 'Vehicle'
   }],
   totalPassengersFerried: {
     type: Number,
@@ -128,31 +116,6 @@ const CourseSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
-});
-
-// Populate middleware
-CourseSchema.pre('find', function(next) {
-  this.populate([
-    { path: 'stops' },
-    { path: 'schedule' },
-    { path: 'fare' },
-    { path: 'performance' },
-    { path: 'assignedVehicles' },
-    { path: 'user', select: 'name email' }
-  ]);
-  next();
-});
-
-CourseSchema.pre('findOne', function(next) {
-  this.populate([
-    { path: 'stops' },
-    { path: 'schedule' },
-    { path: 'fare' },
-    { path: 'performance' },
-    { path: 'assignedVehicles' },
-    { path: 'user', select: 'name email' }
-  ]);
-  next();
 });
 
 module.exports = mongoose.model('Course', CourseSchema);

@@ -1,0 +1,107 @@
+[
+  {
+    "stopId": "STOP001",
+    "stopName": "Nairobi CBD",
+    "stopOrder": 1,
+    "estimatedTime": "08:00",
+    "coordinates": {
+      "latitude": -1.2921,
+      "longitude": 36.8219
+    },
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5
+  },
+  {
+    "stopId": "STOP002",
+    "stopName": "Westlands",
+    "stopOrder": 2,
+    "estimatedTime": "08:15",
+    "coordinates": {
+      "latitude": -1.2657,
+      "longitude": 36.8024
+    },
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3
+  },
+  {
+    "stopId": "STOP003",
+    "stopName": "Thika",
+    "stopOrder": 3,
+    "estimatedTime": "09:00",
+    "coordinates": {
+      "latitude": -1.0333,
+      "longitude": 37.0833
+    },
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5
+  },
+  {
+    "stopId": "STOP004",
+    "stopName": "Terminal A",
+    "stopOrder": 1,
+    "coordinates": {
+      "latitude": -1.2924,
+      "longitude": 36.8222
+    },
+    "estimatedTime": "09:00",
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP005",
+    "stopName": "Station B",
+    "stopOrder": 2,
+    "coordinates": {
+      "latitude": -1.2925,
+      "longitude": 36.8223
+    },
+    "estimatedTime": "09:20",
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP006",
+    "stopName": "Hub C",
+    "stopOrder": 3,
+    "coordinates": {
+      "latitude": -1.2926,
+      "longitude": 36.8224
+    },
+    "estimatedTime": "09:40",
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP007",
+    "stopName": "Depot X",
+    "stopOrder": 1,
+    "coordinates": {
+      "latitude": -1.2927,
+      "longitude": 36.8225
+    },
+    "estimatedTime": "10:00",
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP008",
+    "stopName": "Junction Y",
+    "stopOrder": 2,
+    "coordinates": {
+      "latitude": -1.2928,
+      "longitude": 36.8226
+    },
+    "estimatedTime": "10:25",
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP009",
+    "stopName": "Terminal Z",
+    "stopOrder": 3,
+    "coordinates": {
+      "latitude": -1.2929,
+      "longitude": 36.8227
+    },
+    "estimatedTime": "10:50",
+    "status": "Active"
+  }
+] 

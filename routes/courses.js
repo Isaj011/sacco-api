@@ -9,15 +9,33 @@ const {
 
 const router = express.Router();
 
-router
-  .route('/')
-  .get(getCourses)
-  .post(createCourse);
+const { protect, authorize } = require('../middleware/auth');
+const advancedResults = require('../middleware/advancedResults');
+const Course = require('../models/Course');
+
+// Apply advanced results middleware to GET all courses
+router.get('/', advancedResults(Course, [
+  { path: 'stops' },
+  { path: 'schedule' },
+  { path: 'fare' },
+  { path: 'performance' },
+  { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+  { path: 'user', select: 'name email' }
+]), getCourses);
+
+router.post('/', protect, authorize('admin'), createCourse);
 
 router
   .route('/:id')
-  .get(getCourse)
-  .put(updateCourse)
-  .delete(deleteCourse);
+  .get(advancedResults(Course, [
+    { path: 'stops' },
+    { path: 'schedule' },
+    { path: 'fare' },
+    { path: 'performance' },
+    { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+    { path: 'user', select: 'name email' }
+  ]), getCourse)
+  .put(protect, authorize('admin'), updateCourse)
+  .delete(protect, authorize('admin'), deleteCourse);
 
 module.exports = router;

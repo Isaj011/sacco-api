@@ -2,6 +2,7 @@ const path = require('path')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const Vehicle = require('../models/Vehicle')
+const Course = require('../models/Course')
 // @desc      Get all vehicles
 // @route     GET  /api/v1/vehicles
 // @access    public
@@ -99,10 +100,11 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
     )
   }
 
-  // Validate assignedRoute length
-  if (req.body.assignedRoute && req.body.assignedRoute.length > 100) {
+  // Validate assignedRoute exists
+  const course = await Course.findById(req.body.assignedRoute);
+  if (!course) {
     return next(
-      new ErrorResponse('Route name cannot be longer than 100 characters', 400)
+      new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)
     )
   }
 
@@ -169,11 +171,14 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
     )
   }
 
-  // Validate assignedRoute length if provided
-  if (req.body.assignedRoute && req.body.assignedRoute.length > 100) {
-    return next(
-      new ErrorResponse('Route name cannot be longer than 100 characters', 400)
-    )
+  // Validate assignedRoute exists if provided
+  if (req.body.assignedRoute) {
+    const course = await Course.findById(req.body.assignedRoute);
+    if (!course) {
+      return next(
+        new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)
+      )
+    }
   }
 
   vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {

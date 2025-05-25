@@ -9,7 +9,11 @@ const errorHandler = require('./middleware/error')
 const connectDB = require('./config/db')
 const cors = require('cors')
 const mongoose = require('mongoose')
-const allowCors = require('./middleware/cors')
+const mongoSanitize = require('express-mongo-sanitize')
+const helmet = require('helmet')
+const xss = require('xss-clean')
+const rateLimit = require('express-rate-limit')
+const hpp = require('hpp')
 
 //Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -33,39 +37,18 @@ const stops = require('./routes/stops')
 const schedules = require('./routes/schedules')
 const fares = require('./routes/fares')
 const performances = require('./routes/performances')
-const assignedVehicles = require('./routes/assignedVehicles')
 
 const app = express()
 
-// Body parser
-app.use(express.json())
-
-// Cookie parser
-app.use(cookieParser())
-
-// Dev logging middleware
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'))
-}
-
-// File uploading
-app.use(fileupload())
-
 // Enable CORS for all environments
-const allowedOrigins = [
-  'http://localhost:5173', 
-  'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
-  'https://fare-rari.netlify.app'
-];
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:5173'  // During development, only allow localhost
+    : [
+        'http://localhost:5173',
+        'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
+        'https://fare-rari.netlify.app'
+      ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
@@ -79,12 +62,53 @@ const corsOptions = {
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
   preflightContinue: false,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  maxAge: 86400 // 24 hours
 };
 
-// Apply CORS middleware
+// Apply CORS middleware before other middleware
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
+// Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser
+app.use(cookieParser());
+
+// Dev logging middleware
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
+
+// File uploading
+app.use(fileupload())
+
+// Sanitize data
+app.use(mongoSanitize())
+
+// Set security headers
+app.use(helmet())
+
+// Prevent XSS attacks
+app.use(xss())
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More requests allowed in development
+  message: {
+    success: false,
+    error: 'Too many requests, please try again later.'
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => process.env.NODE_ENV === 'development' && req.path === '/api/v1/auth/login' // Skip rate limiting for login in development
+})
+app.use(limiter)
+
+// Prevent http param pollution
+app.use(hpp())
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')))
@@ -145,11 +169,10 @@ app.use('/api/v1/vehicles', vehicles)
 app.use('/api/v1/courses', courses)
 app.use('/api/v1/auth', auth)
 app.use('/api/v1/users', users)
-app.use('/api/stops', stops)
-app.use('/api/schedules', schedules)
-app.use('/api/fares', fares)
-app.use('/api/performances', performances)
-app.use('/api/assigned-vehicles', assignedVehicles)
+app.use('/api/v1/stops', stops)
+app.use('/api/v1/schedules', schedules)
+app.use('/api/v1/fares', fares)
+app.use('/api/v1/performances', performances)
 
 app.use(errorHandler)
 

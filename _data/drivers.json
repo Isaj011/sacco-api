@@ -1,0 +1,95 @@
+[
+  {
+    "driverName": "John Kamau",
+    "nationalId": "12345678",
+    "contactDetails": {
+      "phone": "+254712345678",
+      "email": "john.kamau@example.com",
+      "address": "123 Mombasa Road, Nairobi"
+    },
+    "bloodType": "O+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL12345678",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV12345678",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Mary Kamau",
+        "relationship": "Spouse",
+        "phone": "+254723456789",
+        "isPrimary": true
+      }
+    ]
+  },
+  {
+    "driverName": "Peter Ochieng",
+    "nationalId": "23456789",
+    "contactDetails": {
+      "phone": "+254723456789",
+      "email": "peter.ochieng@example.com",
+      "address": "456 Thika Road, Nairobi"
+    },
+    "bloodType": "A+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL23456789",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV23456789",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Sarah Ochieng",
+        "relationship": "Spouse",
+        "phone": "+254734567890",
+        "isPrimary": true
+      }
+    ]
+  },
+  {
+    "driverName": "James Mwangi",
+    "nationalId": "34567890",
+    "contactDetails": {
+      "phone": "+254734567890",
+      "email": "james.mwangi@example.com",
+      "address": "789 Ngong Road, Nairobi"
+    },
+    "bloodType": "B+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL34567890",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV34567890",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Jane Mwangi",
+        "relationship": "Spouse",
+        "phone": "+254745678901",
+        "isPrimary": true
+      }
+    ]
+  }
+] 

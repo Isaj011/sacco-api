@@ -47,10 +47,9 @@ const VehicleSchema = new mongoose.Schema({
 
   // Route and operation details
   assignedRoute: {
-    type: String,
+    type: mongoose.Schema.ObjectId,
+    ref: 'Course',
     required: [true, 'Please add the assigned route'],
-    trim: true,
-    maxlength: [100, 'Route name cannot be longer than 100 characters'],
   },
   averageSpeed: {
     type: Number,
@@ -138,5 +137,16 @@ VehicleSchema.pre('save', function (next) {
   this.slug = slugify(this.plateNumber, { lower: true })
   next()
 })
+
+// Populate middleware
+VehicleSchema.pre('find', function(next) {
+  this.populate('assignedRoute', 'routeName routeNumber');
+  next();
+});
+
+VehicleSchema.pre('findOne', function(next) {
+  this.populate('assignedRoute', 'routeName routeNumber');
+  next();
+});
 
 module.exports = mongoose.model('Vehicle', VehicleSchema)

@@ -4,31 +4,38 @@ const {
   getCourse,
   createCourse,
   updateCourse,
-  deleteCourse,
-} = require('../controllers/courses');
+  deleteCourse
+} = require('../controllers/courseController');
 
+const router = express.Router();
+
+const { protect, authorize } = require('../middleware/auth');
+const advancedResults = require('../middleware/advancedResults');
 const Course = require('../models/Course');
 
-const router = express.Router({ mergeParams: true });
+// Apply advanced results middleware to GET all courses
+router.get('/', advancedResults(Course, [
+  { path: 'stops' },
+  { path: 'schedule' },
+  { path: 'fare' },
+  { path: 'performance' },
+  { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+  { path: 'user', select: 'name email' }
+]), getCourses);
 
-const advancedResults = require('../middleware/advancedResults');
-const { protect, authorize } = require('../middleware/auth');
-
-router
-  .route('/')
-  .get(
-    advancedResults(Course, {
-      path: 'assignedVehicles.vehicleId',  // Corrected path for population
-      select: 'plateNumber model seatingCapacity', // Select fields to populate
-    }),
-    getCourses
-  )
-  .post(protect, authorize('publisher', 'admin'), createCourse);
+router.post('/', protect, authorize('admin'), createCourse);
 
 router
   .route('/:id')
-  .get(getCourse)
-  .put(protect, authorize('publisher', 'admin'), updateCourse)
-  .delete(protect, authorize('publisher', 'admin'), deleteCourse);
+  .get(advancedResults(Course, [
+    { path: 'stops' },
+    { path: 'schedule' },
+    { path: 'fare' },
+    { path: 'performance' },
+    { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+    { path: 'user', select: 'name email' }
+  ]), getCourse)
+  .put(protect, authorize('admin'), updateCourse)
+  .delete(protect, authorize('admin'), deleteCourse);
 
 module.exports = router;

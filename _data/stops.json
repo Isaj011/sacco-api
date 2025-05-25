@@ -1,0 +1,142 @@
+[
+  {
+    "stopId": "STOP001",
+    "stopName": "Nairobi CBD",
+    "stopOrder": 1,
+    "estimatedTime": "06:00",
+    "coordinates": {
+      "latitude": -1.2921,
+      "longitude": 36.8219
+    },
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP002",
+    "stopName": "Westlands",
+    "stopOrder": 2,
+    "estimatedTime": "06:15",
+    "coordinates": {
+      "latitude": -1.2657,
+      "longitude": 36.8024
+    },
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP003",
+    "stopName": "Lavington",
+    "stopOrder": 3,
+    "estimatedTime": "06:25",
+    "coordinates": {
+      "latitude": -1.2833,
+      "longitude": 36.7833
+    },
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP004",
+    "stopName": "Karen",
+    "stopOrder": 4,
+    "estimatedTime": "06:40",
+    "coordinates": {
+      "latitude": -1.3167,
+      "longitude": 36.7167
+    },
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP005",
+    "stopName": "Thika Road",
+    "stopOrder": 1,
+    "estimatedTime": "06:00",
+    "coordinates": {
+      "latitude": -1.2500,
+      "longitude": 36.8500
+    },
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP006",
+    "stopName": "Ruiru",
+    "stopOrder": 2,
+    "estimatedTime": "06:20",
+    "coordinates": {
+      "latitude": -1.1500,
+      "longitude": 36.9667
+    },
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP007",
+    "stopName": "Thika Town",
+    "stopOrder": 3,
+    "estimatedTime": "06:45",
+    "coordinates": {
+      "latitude": -1.0500,
+      "longitude": 37.0833
+    },
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP008",
+    "stopName": "Mombasa Road",
+    "stopOrder": 1,
+    "estimatedTime": "06:00",
+    "coordinates": {
+      "latitude": -1.3167,
+      "longitude": 36.8333
+    },
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP009",
+    "stopName": "Embakasi",
+    "stopOrder": 2,
+    "estimatedTime": "06:15",
+    "coordinates": {
+      "latitude": -1.3000,
+      "longitude": 36.9167
+    },
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP010",
+    "stopName": "Athi River",
+    "stopOrder": 3,
+    "estimatedTime": "06:35",
+    "coordinates": {
+      "latitude": -1.4500,
+      "longitude": 37.0167
+    },
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
+    "status": "Active"
+  }
+] 

@@ -55,6 +55,15 @@ const importData = async () => {
     const createdStops = await Stop.create(stops)
     console.log('Stops created...'.green.inverse)
 
+    // Group stops by route (based on stopOrder starting from 1)
+    const routeStops = {}
+    createdStops.forEach(stop => {
+      if (!routeStops[stop.stopOrder]) {
+        routeStops[stop.stopOrder] = []
+      }
+      routeStops[stop.stopOrder].push(stop)
+    })
+
     // Create performance metrics
     const performance = await Performance.create({
       averageSpeed: 60,
@@ -84,31 +93,63 @@ const importData = async () => {
 
     // Create courses with references
     const createdCourses = await Course.create(
-      courses.map(course => ({
-        ...course,
-        user: createdUsers[0]._id,
-        stops: createdStops.map(stop => stop._id),
-        schedule: schedule._id,
-        fare: fare._id,
-        performance: performance._id
-      }))
+      courses.map((course, index) => {
+        // Get stops for this route based on stopId ranges
+        const routeStops = createdStops.filter(stop => {
+          const stopId = parseInt(stop.stopId.replace('STOP', ''))
+          if (index === 0) return stopId >= 1 && stopId <= 4    // Route 1: STOP001-STOP004
+          if (index === 1) return stopId >= 5 && stopId <= 7    // Route 2: STOP005-STOP007
+          return stopId >= 8 && stopId <= 10                   // Route 3: STOP008-STOP010
+        })
+
+        // Verify each route has exactly one terminal and one destination
+        const terminalStops = routeStops.filter(stop => stop.isTerminal)
+        const destinationStops = routeStops.filter(stop => stop.isDestination)
+
+        if (terminalStops.length !== 1) {
+          throw new Error(`Route ${index + 1} must have exactly one terminal stop`)
+        }
+        if (destinationStops.length !== 1) {
+          throw new Error(`Route ${index + 1} must have exactly one destination stop`)
+        }
+
+        // Sort stops by stopOrder to maintain route sequence
+        const sortedStops = routeStops.sort((a, b) => a.stopOrder - b.stopOrder)
+        const routeStopIds = sortedStops.map(stop => stop._id)
+
+        return {
+          ...course,
+          user: createdUsers[0]._id,
+          stops: routeStopIds,
+          schedule: schedule._id,
+          fare: fare._id,
+          performance: performance._id,
+          terminalStop: terminalStops[0]._id,
+          destinationStop: destinationStops[0]._id
+        }
+      })
     )
     console.log('Courses created...'.green.inverse)
 
     // Create vehicles with course references
     const createdVehicles = await Vehicle.create(
-      vehicles.map(vehicle => ({
+      vehicles.map((vehicle, index) => ({
         ...vehicle,
         user: createdUsers[0]._id,
-        assignedRoute: createdCourses[0]._id
+        assignedRoute: createdCourses[index % createdCourses.length]._id
       }))
     )
     console.log('Vehicles created...'.green.inverse)
 
     // Update courses with vehicle references
-    await Course.findByIdAndUpdate(createdCourses[0]._id, {
-      assignedVehicles: [createdVehicles[0]._id]
-    })
+    for (let i = 0; i < createdCourses.length; i++) {
+      const courseVehicles = createdVehicles.filter(
+        vehicle => vehicle.assignedRoute.toString() === createdCourses[i]._id.toString()
+      )
+      await Course.findByIdAndUpdate(createdCourses[i]._id, {
+        assignedVehicles: courseVehicles.map(vehicle => vehicle._id)
+      })
+    }
     console.log('Course-vehicle relationships created...'.green.inverse)
 
     console.log('All data imported successfully!'.green.inverse)

@@ -3,105 +3,140 @@
     "stopId": "STOP001",
     "stopName": "Nairobi CBD",
     "stopOrder": 1,
-    "estimatedTime": "08:00",
+    "estimatedTime": "06:00",
     "coordinates": {
       "latitude": -1.2921,
       "longitude": 36.8219
     },
     "isTerminal": true,
     "isDestination": false,
-    "waitingTime": 5
+    "waitingTime": 5,
+    "status": "Active"
   },
   {
     "stopId": "STOP002",
     "stopName": "Westlands",
     "stopOrder": 2,
-    "estimatedTime": "08:15",
+    "estimatedTime": "06:15",
     "coordinates": {
       "latitude": -1.2657,
       "longitude": 36.8024
     },
     "isTerminal": false,
     "isDestination": false,
-    "waitingTime": 3
+    "waitingTime": 3,
+    "status": "Active"
   },
   {
     "stopId": "STOP003",
-    "stopName": "Thika",
+    "stopName": "Lavington",
     "stopOrder": 3,
-    "estimatedTime": "09:00",
+    "estimatedTime": "06:25",
     "coordinates": {
-      "latitude": -1.0333,
-      "longitude": 37.0833
+      "latitude": -1.2833,
+      "longitude": 36.7833
     },
     "isTerminal": false,
-    "isDestination": true,
-    "waitingTime": 5
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
   },
   {
     "stopId": "STOP004",
-    "stopName": "Terminal A",
-    "stopOrder": 1,
+    "stopName": "Karen",
+    "stopOrder": 4,
+    "estimatedTime": "06:40",
     "coordinates": {
-      "latitude": -1.2924,
-      "longitude": 36.8222
+      "latitude": -1.3167,
+      "longitude": 36.7167
     },
-    "estimatedTime": "09:00",
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
     "status": "Active"
   },
   {
     "stopId": "STOP005",
-    "stopName": "Station B",
-    "stopOrder": 2,
+    "stopName": "Thika Road",
+    "stopOrder": 1,
+    "estimatedTime": "06:00",
     "coordinates": {
-      "latitude": -1.2925,
-      "longitude": 36.8223
+      "latitude": -1.2500,
+      "longitude": 36.8500
     },
-    "estimatedTime": "09:20",
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5,
     "status": "Active"
   },
   {
     "stopId": "STOP006",
-    "stopName": "Hub C",
-    "stopOrder": 3,
+    "stopName": "Ruiru",
+    "stopOrder": 2,
+    "estimatedTime": "06:20",
     "coordinates": {
-      "latitude": -1.2926,
-      "longitude": 36.8224
+      "latitude": -1.1500,
+      "longitude": 36.9667
     },
-    "estimatedTime": "09:40",
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
     "status": "Active"
   },
   {
     "stopId": "STOP007",
-    "stopName": "Depot X",
-    "stopOrder": 1,
+    "stopName": "Thika Town",
+    "stopOrder": 3,
+    "estimatedTime": "06:45",
     "coordinates": {
-      "latitude": -1.2927,
-      "longitude": 36.8225
+      "latitude": -1.0500,
+      "longitude": 37.0833
     },
-    "estimatedTime": "10:00",
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
     "status": "Active"
   },
   {
     "stopId": "STOP008",
-    "stopName": "Junction Y",
-    "stopOrder": 2,
+    "stopName": "Mombasa Road",
+    "stopOrder": 1,
+    "estimatedTime": "06:00",
     "coordinates": {
-      "latitude": -1.2928,
-      "longitude": 36.8226
+      "latitude": -1.3167,
+      "longitude": 36.8333
     },
-    "estimatedTime": "10:25",
+    "isTerminal": true,
+    "isDestination": false,
+    "waitingTime": 5,
     "status": "Active"
   },
   {
     "stopId": "STOP009",
-    "stopName": "Terminal Z",
-    "stopOrder": 3,
+    "stopName": "Embakasi",
+    "stopOrder": 2,
+    "estimatedTime": "06:15",
     "coordinates": {
-      "latitude": -1.2929,
-      "longitude": 36.8227
+      "latitude": -1.3000,
+      "longitude": 36.9167
     },
-    "estimatedTime": "10:50",
+    "isTerminal": false,
+    "isDestination": false,
+    "waitingTime": 3,
+    "status": "Active"
+  },
+  {
+    "stopId": "STOP010",
+    "stopName": "Athi River",
+    "stopOrder": 3,
+    "estimatedTime": "06:35",
+    "coordinates": {
+      "latitude": -1.4500,
+      "longitude": 37.0167
+    },
+    "isTerminal": false,
+    "isDestination": true,
+    "waitingTime": 5,
     "status": "Active"
   }
 ] 

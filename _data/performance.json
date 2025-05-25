@@ -1,0 +1,112 @@
+[
+  {
+    "performanceId": "PERF001",
+    "vehicleId": "KAA 001A",
+    "routeId": "NK001",
+    "date": "2024-03-15",
+    "totalTrips": 12,
+    "totalPassengers": 360,
+    "totalRevenue": 18000,
+    "averageOccupancy": 85,
+    "onTimePercentage": 92,
+    "fuelConsumption": 45,
+    "maintenanceStatus": "Good",
+    "driverPerformance": "Excellent",
+    "customerSatisfaction": 4.5,
+    "incidents": 0,
+    "breakdowns": 0,
+    "averageSpeed": 38,
+    "peakHourPerformance": {
+      "morning": 95,
+      "evening": 88
+    }
+  },
+  {
+    "performanceId": "PERF002",
+    "vehicleId": "KAA 002B",
+    "routeId": "NU001",
+    "date": "2024-03-15",
+    "totalTrips": 10,
+    "totalPassengers": 300,
+    "totalRevenue": 18000,
+    "averageOccupancy": 80,
+    "onTimePercentage": 90,
+    "fuelConsumption": 40,
+    "maintenanceStatus": "Good",
+    "driverPerformance": "Good",
+    "customerSatisfaction": 4.2,
+    "incidents": 0,
+    "breakdowns": 0,
+    "averageSpeed": 35,
+    "peakHourPerformance": {
+      "morning": 92,
+      "evening": 85
+    }
+  },
+  {
+    "performanceId": "PERF003",
+    "vehicleId": "KAA 003C",
+    "routeId": "NK002",
+    "date": "2024-03-15",
+    "totalTrips": 14,
+    "totalPassengers": 196,
+    "totalRevenue": 9800,
+    "averageOccupancy": 75,
+    "onTimePercentage": 88,
+    "fuelConsumption": 35,
+    "maintenanceStatus": "Good",
+    "driverPerformance": "Good",
+    "customerSatisfaction": 4.0,
+    "incidents": 0,
+    "breakdowns": 0,
+    "averageSpeed": 42,
+    "peakHourPerformance": {
+      "morning": 90,
+      "evening": 82
+    }
+  },
+  {
+    "performanceId": "PERF004",
+    "vehicleId": "KAA 004D",
+    "routeId": "ND001",
+    "date": "2024-03-15",
+    "totalTrips": 11,
+    "totalPassengers": 363,
+    "totalRevenue": 16335,
+    "averageOccupancy": 88,
+    "onTimePercentage": 95,
+    "fuelConsumption": 42,
+    "maintenanceStatus": "Excellent",
+    "driverPerformance": "Excellent",
+    "customerSatisfaction": 4.7,
+    "incidents": 0,
+    "breakdowns": 0,
+    "averageSpeed": 36,
+    "peakHourPerformance": {
+      "morning": 96,
+      "evening": 90
+    }
+  },
+  {
+    "performanceId": "PERF005",
+    "vehicleId": "KAA 005E",
+    "routeId": "NE001",
+    "date": "2024-03-15",
+    "totalTrips": 13,
+    "totalPassengers": 390,
+    "totalRevenue": 21450,
+    "averageOccupancy": 82,
+    "onTimePercentage": 89,
+    "fuelConsumption": 44,
+    "maintenanceStatus": "Good",
+    "driverPerformance": "Good",
+    "customerSatisfaction": 4.3,
+    "incidents": 0,
+    "breakdowns": 0,
+    "averageSpeed": 39,
+    "peakHourPerformance": {
+      "morning": 93,
+      "evening": 86
+    }
+  }
+] 

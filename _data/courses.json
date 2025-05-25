@@ -1,13 +1,112 @@
 [
   {
-    "routeName": "Nairobi - Thika",
-    "routeNumber": "NT001",
-    "description": "Main route from Nairobi CBD to Thika",
-    "totalDistance": 45,
-    "estimatedDuration": "1 hour",
+    "routeName": "Nairobi CBD - Komarock",
+    "routeNumber": "NK001",
+    "description": "Eastern route from CBD to Komarock Estate",
+    "totalDistance": 15,
+    "estimatedDuration": "45 minutes",
     "status": "Active",
     "maxCapacity": 30,
     "currentLocation": "Nairobi CBD",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Utawala",
+    "routeNumber": "NU001",
+    "description": "Eastern route from CBD to Utawala Estate",
+    "totalDistance": 18,
+    "estimatedDuration": "1 hour",
+    "status": "Active",
+    "maxCapacity": 30,
+    "currentLocation": "Utawala",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Kasarani",
+    "routeNumber": "NK002",
+    "description": "Northern route from CBD to Kasarani",
+    "totalDistance": 12,
+    "estimatedDuration": "40 minutes",
+    "status": "Active",
+    "maxCapacity": 33,
+    "currentLocation": "Nairobi CBD",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Westlands",
+    "routeNumber": "NW001",
+    "description": "Western route from CBD to Westlands",
+    "totalDistance": 8,
+    "estimatedDuration": "30 minutes",
+    "status": "Active",
+    "maxCapacity": 30,
+    "currentLocation": "Westlands",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Buruburu",
+    "routeNumber": "NB001",
+    "description": "Eastern route from CBD to Buruburu Estate",
+    "totalDistance": 10,
+    "estimatedDuration": "35 minutes",
+    "status": "Active",
+    "maxCapacity": 30,
+    "currentLocation": "Nairobi CBD",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Donholm",
+    "routeNumber": "ND001",
+    "description": "Eastern route from CBD to Donholm Estate",
+    "totalDistance": 12,
+    "estimatedDuration": "40 minutes",
+    "status": "Active",
+    "maxCapacity": 30,
+    "currentLocation": "Donholm",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - South B",
+    "routeNumber": "NS001",
+    "description": "Southern route from CBD to South B Estate",
+    "totalDistance": 7,
+    "estimatedDuration": "25 minutes",
+    "status": "Active",
+    "maxCapacity": 33,
+    "currentLocation": "Nairobi CBD",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Ruiru",
+    "routeNumber": "NR001",
+    "description": "Northern route from CBD to Ruiru Town",
+    "totalDistance": 20,
+    "estimatedDuration": "1 hour",
+    "status": "Active",
+    "maxCapacity": 33,
+    "currentLocation": "Ruiru",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Embakasi",
+    "routeNumber": "NE001",
+    "description": "Eastern route from CBD to Embakasi",
+    "totalDistance": 15,
+    "estimatedDuration": "45 minutes",
+    "status": "Active",
+    "maxCapacity": 30,
+    "currentLocation": "Nairobi CBD",
+    "totalPassengersFerried": 0
+  },
+  {
+    "routeName": "Nairobi CBD - Ngong",
+    "routeNumber": "NN001",
+    "description": "Southern route from CBD to Ngong Town",
+    "totalDistance": 22,
+    "estimatedDuration": "1 hour 15 minutes",
+    "status": "Active",
+    "maxCapacity": 33,
+    "currentLocation": "Ngong",
     "totalPassengersFerried": 0
   }
 ]

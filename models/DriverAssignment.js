@@ -1,24 +1,21 @@
 const mongoose = require('mongoose');
 
 const driverAssignmentSchema = new mongoose.Schema({
-  driverId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Driver', 
+  driverId: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Driver',
     required: [true, 'Driver ID is required']
   },
   
   // Administrative Information
-  employeeId: { 
-    type: String, 
-    required: [true, 'Employee ID is required'],
-    unique: true,
-    trim: true
+  employeeId: {
+    type: String,
+    unique: true
   },
   salary: {
     amount: {
       type: Number,
-      required: [true, 'Salary amount is required'],
-      min: [0, 'Salary amount cannot be negative']
+      required: [true, 'Salary amount is required']
     },
     currency: {
       type: String,
@@ -27,8 +24,8 @@ const driverAssignmentSchema = new mongoose.Schema({
     },
     paymentFrequency: {
       type: String,
-      required: [true, 'Payment frequency is required'],
-      enum: ['weekly', 'bi-weekly', 'monthly']
+      enum: ['daily', 'weekly', 'monthly'],
+      default: 'monthly'
     }
   },
   leaveRecords: [{
@@ -116,14 +113,14 @@ const driverAssignmentSchema = new mongoose.Schema({
   // Vehicle Assignment
   vehicleAssignment: {
     busNumber: { 
-    type: mongoose.Schema.ObjectId,
-    ref: 'Vehicle',
+      type: mongoose.Schema.ObjectId,
+      ref: 'Vehicle',
       required: [true, 'Bus number is required']
     },
     routeAssigned: { 
-    type: mongoose.Schema.ObjectId,
-    ref: 'Course',
-    required: [true, 'Route assignment is required']
+      type: mongoose.Schema.ObjectId,
+      ref: 'Course',
+      required: [true, 'Route assignment is required']
     },
     vehicleType: {
       type: String,
@@ -155,9 +152,66 @@ const driverAssignmentSchema = new mongoose.Schema({
 
 // Add indexes for frequently queried fields
 driverAssignmentSchema.index({ driverId: 1 });
-driverAssignmentSchema.index({ employeeId: 1 });
 driverAssignmentSchema.index({ 'vehicleAssignment.busNumber': 1 });
 driverAssignmentSchema.index({ 'vehicleAssignment.routeAssigned': 1 });
+
+// Static method to generate next employee ID
+driverAssignmentSchema.statics.generateNextEmployeeId = async function() {
+  const prefix = 'EMP';
+  const year = new Date().getFullYear().toString().slice(-2);
+  
+  const latestAssignment = await this.findOne()
+    .sort({ employeeId: -1 })
+    .select('employeeId');
+  
+  let sequence = 1;
+  if (latestAssignment && latestAssignment.employeeId) {
+    const latestSequence = parseInt(latestAssignment.employeeId.slice(-4));
+    sequence = latestSequence + 1;
+  }
+  
+  return `${prefix}-${year}-${sequence.toString().padStart(4, '0')}`;
+};
+
+// Pre-save middleware to ensure employeeId is set
+driverAssignmentSchema.pre('save', async function(next) {
+  if (!this.employeeId) {
+    this.employeeId = await this.constructor.generateNextEmployeeId();
+  }
+  next();
+});
+
+// Middleware to update Vehicle's driverAssignment field
+driverAssignmentSchema.post('save', async function() {
+  try {
+    const Vehicle = mongoose.model('Vehicle');
+    await Vehicle.findByIdAndUpdate(
+      this.vehicleAssignment.busNumber,
+      { 
+        driverAssignment: this._id,
+        driver: this.driverId
+      }
+    );
+  } catch (error) {
+    console.error('Error updating Vehicle driverAssignment:', error);
+  }
+});
+
+// Middleware to remove Vehicle's driverAssignment reference when deleted
+driverAssignmentSchema.post('remove', async function() {
+  try {
+    const Vehicle = mongoose.model('Vehicle');
+    await Vehicle.findByIdAndUpdate(
+      this.vehicleAssignment.busNumber,
+      { 
+        $unset: { driverAssignment: 1 },
+        $unset: { driver: 1 }
+      }
+    );
+  } catch (error) {
+    console.error('Error removing Vehicle driverAssignment:', error);
+  }
+});
 
 // Pre-save middleware to update the updatedAt field
 driverAssignmentSchema.pre('save', function(next) {
@@ -185,6 +239,4 @@ driverAssignmentSchema.methods.getActiveDisciplinaryRecords = function() {
   );
 };
 
-const DriverAssignment = mongoose.model('DriverAssignment', driverAssignmentSchema);
-
-module.exports = DriverAssignment; 
+module.exports = mongoose.model('DriverAssignment', driverAssignmentSchema); 

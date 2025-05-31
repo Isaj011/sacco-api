@@ -33,11 +33,15 @@ const VehicleSchema = new mongoose.Schema({
   },
 
   // Driver and capacity information
-  driverName: {
-    type: String,
+  driver: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Driver',
     required: [true, 'Please add the assigned driver'],
-    trim: true,
-    maxlength: [50, 'Driver name cannot be longer than 50 characters'],
+  },
+  driverAssignment: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'DriverAssignment',
+    default: null
   },
   seatingCapacity: {
     type: Number,
@@ -140,12 +144,51 @@ VehicleSchema.pre('save', function (next) {
 
 // Populate middleware
 VehicleSchema.pre('find', function(next) {
-  this.populate('assignedRoute', 'routeName routeNumber');
+  this.populate([
+    { path: 'assignedRoute', select: 'routeName routeNumber' },
+    { path: 'driver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
+    { path: 'driverAssignment', select: 'employeeId salary vehicleAssignment' }
+  ]);
   next();
 });
 
 VehicleSchema.pre('findOne', function(next) {
-  this.populate('assignedRoute', 'routeName routeNumber');
+  this.populate([
+    { path: 'assignedRoute', select: 'routeName routeNumber' },
+    { path: 'driver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
+    { path: 'driverAssignment', select: 'employeeId salary vehicleAssignment' }
+  ]);
+  next();
+});
+
+// Middleware to update Course's assignedVehicles array
+VehicleSchema.post('save', async function(next) {
+  try {
+    const Course = mongoose.model('Course');
+    if (this.isModified('assignedRoute')) {
+      // Remove from old route if exists
+      if (this._oldAssignedRoute) {
+        await Course.findByIdAndUpdate(
+          this._oldAssignedRoute,
+          { $pull: { assignedVehicles: this._id } }
+        );
+      }
+      // Add to new route
+      await Course.findByIdAndUpdate(
+        this.assignedRoute,
+        { $addToSet: { assignedVehicles: this._id } }
+      );
+    }
+  } catch (error) {
+    console.error('Error updating Course assignedVehicles:', error);
+  }
+});
+
+// Store old assignedRoute before update
+VehicleSchema.pre('save', function(next) {
+  if (this.isModified('assignedRoute')) {
+    this._oldAssignedRoute = this.assignedRoute;
+  }
   next();
 });
 

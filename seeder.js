@@ -7,23 +7,22 @@ const fs = require('fs')
 dotenv.config({ path: './config/config.env' })
 
 // Load models
+const User = require('./models/User')
+const Driver = require('./models/Driver')
 const Vehicle = require('./models/Vehicle')
 const Course = require('./models/Course')
-const User = require('./models/User')
+const DriverAssignment = require('./models/DriverAssignment')
 const Stop = require('./models/Stop')
 const Schedule = require('./models/Schedule')
 const Fare = require('./models/Fare')
 const Performance = require('./models/Performance')
 
-// Connect to DB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-
 // Read JSON files
 const users = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/users.json`, 'utf-8')
+)
+const drivers = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/drivers.json`, 'utf-8')
 )
 const vehicles = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/vehicles.json`, 'utf-8')
@@ -34,20 +33,34 @@ const courses = JSON.parse(
 const stops = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/stops.json`, 'utf-8')
 )
+const schedules = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/schedules.json`, 'utf-8')
+)
+const fares = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/fares.json`, 'utf-8')
+)
+const performances = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/performance.json`, 'utf-8')
+)
+
+// Connect to DB
+mongoose.connect(process.env.MONGO_URI)
 
 // Import into DB
 const importData = async () => {
   try {
     // Clear existing data
-    await Course.deleteMany()
-    await Vehicle.deleteMany()
     await User.deleteMany()
+    await Driver.deleteMany()
+    await Vehicle.deleteMany()
+    await Course.deleteMany()
+    await DriverAssignment.deleteMany()
     await Stop.deleteMany()
     await Schedule.deleteMany()
     await Fare.deleteMany()
     await Performance.deleteMany()
 
-    // Create users first
+    // Create users (admins/managers)
     const createdUsers = await User.create(users)
     console.log('Users created...'.green.inverse)
 
@@ -55,41 +68,17 @@ const importData = async () => {
     const createdStops = await Stop.create(stops)
     console.log('Stops created...'.green.inverse)
 
-    // Group stops by route (based on stopOrder starting from 1)
-    const routeStops = {}
-    createdStops.forEach(stop => {
-      if (!routeStops[stop.stopOrder]) {
-        routeStops[stop.stopOrder] = []
-      }
-      routeStops[stop.stopOrder].push(stop)
-    })
+    // Create schedules
+    const createdSchedules = await Schedule.create(schedules)
+    console.log('Schedules created...'.green.inverse)
 
-    // Create performance metrics
-    const performance = await Performance.create({
-      averageSpeed: 60,
-      onTimePercentage: 95,
-      passengerSatisfaction: 4.5,
-      totalTrips: 0
-    })
-    console.log('Performance metrics created...'.green.inverse)
+    // Create fares
+    const createdFares = await Fare.create(fares)
+    console.log('Fares created...'.green.inverse)
 
-    // Create fare structure
-    const fare = await Fare.create({
-      baseFare: 50,
-      distanceFare: 5,
-      peakHourMultiplier: 1.2,
-      discountPercentage: 0
-    })
-    console.log('Fare structure created...'.green.inverse)
-
-    // Create schedule
-    const schedule = await Schedule.create({
-      startTime: '06:00',
-      endTime: '22:00',
-      frequency: 15,
-      isActive: true
-    })
-    console.log('Schedule created...'.green.inverse)
+    // Create performance records
+    const createdPerformances = await Performance.create(performances)
+    console.log('Performance records created...'.green.inverse)
 
     // Create courses with references
     const createdCourses = await Course.create(
@@ -102,17 +91,6 @@ const importData = async () => {
           return stopId >= 8 && stopId <= 10                   // Route 3: STOP008-STOP010
         })
 
-        // Verify each route has exactly one terminal and one destination
-        const terminalStops = routeStops.filter(stop => stop.isTerminal)
-        const destinationStops = routeStops.filter(stop => stop.isDestination)
-
-        if (terminalStops.length !== 1) {
-          throw new Error(`Route ${index + 1} must have exactly one terminal stop`)
-        }
-        if (destinationStops.length !== 1) {
-          throw new Error(`Route ${index + 1} must have exactly one destination stop`)
-        }
-
         // Sort stops by stopOrder to maintain route sequence
         const sortedStops = routeStops.sort((a, b) => a.stopOrder - b.stopOrder)
         const routeStopIds = sortedStops.map(stop => stop._id)
@@ -121,25 +99,79 @@ const importData = async () => {
           ...course,
           user: createdUsers[0]._id,
           stops: routeStopIds,
-          schedule: schedule._id,
-          fare: fare._id,
-          performance: performance._id,
-          terminalStop: terminalStops[0]._id,
-          destinationStop: destinationStops[0]._id
+          schedule: createdSchedules[index % createdSchedules.length]._id,
+          fare: createdFares[index % createdFares.length]._id,
+          performance: createdPerformances[index % createdPerformances.length]._id
         }
       })
     )
     console.log('Courses created...'.green.inverse)
 
-    // Create vehicles with course references
-    const createdVehicles = await Vehicle.create(
-      vehicles.map((vehicle, index) => ({
-        ...vehicle,
-        user: createdUsers[0]._id,
-        assignedRoute: createdCourses[index % createdCourses.length]._id
+    // Create drivers first
+    const createdDrivers = await Driver.create(
+      drivers.map(driver => ({
+        ...driver,
+        status: 'registered'
       }))
     )
+    console.log('Drivers created...'.green.inverse)
+
+    // Create vehicles first
+    const createdVehicles = await Vehicle.create(
+      vehicles.map((vehicle, index) => {
+        const driver = createdDrivers[index % createdDrivers.length]
+        const course = createdCourses[index % createdCourses.length]
+
+        return {
+          ...vehicle,
+          user: createdUsers[0]._id,
+          driver: driver._id,
+          assignedRoute: course._id
+        }
+      })
+    )
     console.log('Vehicles created...'.green.inverse)
+
+    // Create driver assignments with vehicle references
+    const assignments = createdDrivers.map((driver, index) => {
+      const course = createdCourses[index % createdCourses.length]
+      const vehicle = createdVehicles[index % createdVehicles.length]
+
+      return {
+        driverId: driver._id,
+        employeeId: `EMP${String(index + 1).padStart(3, '0')}`,
+        salary: {
+          amount: 50000 + (index * 5000),
+          currency: 'KES',
+          paymentFrequency: 'monthly'
+        },
+        vehicleAssignment: {
+          busNumber: vehicle._id,
+          vehicleType: vehicle.vehicleModel,
+          routeAssigned: course._id,
+          assignmentDate: new Date(),
+          assignedBy: createdUsers[0]._id
+        }
+      }
+    })
+
+    const createdAssignments = await DriverAssignment.create(assignments)
+    console.log('Driver assignments created...'.green.inverse)
+
+    // Update vehicles with driver assignment references
+    for (let i = 0; i < createdVehicles.length; i++) {
+      await Vehicle.findByIdAndUpdate(createdVehicles[i]._id, {
+        driverAssignment: createdAssignments[i % createdAssignments.length]._id
+      })
+    }
+    console.log('Vehicles updated with driver assignments...'.green.inverse)
+
+    // Update driver statuses to 'assigned'
+    await Driver.updateMany(
+      { _id: { $in: createdDrivers.map(d => d._id) } },
+      { $set: { status: 'assigned' } }
+    )
+    console.log('Driver statuses updated...'.green.inverse)
 
     // Update courses with vehicle references
     for (let i = 0; i < createdCourses.length; i++) {
@@ -163,18 +195,20 @@ const importData = async () => {
 // Delete data
 const deleteData = async () => {
   try {
-    await Course.deleteMany()
-    await Vehicle.deleteMany()
     await User.deleteMany()
+    await Driver.deleteMany()
+    await Vehicle.deleteMany()
+    await Course.deleteMany()
+    await DriverAssignment.deleteMany()
     await Stop.deleteMany()
     await Schedule.deleteMany()
     await Fare.deleteMany()
     await Performance.deleteMany()
 
-    console.log('All data destroyed...'.red.inverse)
+    console.log('All data destroyed!'.red.inverse)
     process.exit()
   } catch (err) {
-    console.error('Error deleting data:'.red.inverse, err)
+    console.error('Error destroying data:'.red.inverse, err)
     process.exit(1)
   }
 }

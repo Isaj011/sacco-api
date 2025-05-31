@@ -38,7 +38,7 @@ exports.createAssignment = async (req, res) => {
       });
     }
 
-    // Create new assignment
+    // Create new assignment (employeeId will be generated automatically)
     const assignment = new DriverAssignment({
       driverId,
       ...assignmentData

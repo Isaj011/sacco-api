@@ -67,10 +67,6 @@ const CourseSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'Stop'
   }],
-  schedule: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Schedule'
-  },
   fare: {
     type: mongoose.Schema.ObjectId,
     ref: 'Fare'
@@ -89,17 +85,12 @@ const CourseSchema = new mongoose.Schema({
     default: 0
   },
   maxCapacity: {
-    type: Number,
-    required: [true, 'Please add maximum capacity']
+    type: Number
   },
   currentLocation: {
     latitude: Number,
     longitude: Number,
     lastUpdated: String,
-  },
-  performance: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Performance'
   },
   assignedVehicles: [{
     type: mongoose.Schema.ObjectId,
@@ -113,9 +104,38 @@ const CourseSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
-  }
+  },
+  schedule: ScheduleSchema,
+  performance: PerformanceSchema
 }, {
   timestamps: true
+});
+
+// Add a pre-save hook to calculate maxCapacity
+CourseSchema.pre('save', async function(next) {
+  if (this.assignedVehicles && this.assignedVehicles.length > 0) {
+    const vehicles = await this.model('Vehicle').find({ _id: { $in: this.assignedVehicles } });
+    this.maxCapacity = vehicles.reduce((total, vehicle) => total + (vehicle.seatingCapacity || 0), 0);
+  }
+  if (this.stops && this.stops.length > 0) {
+    const stops = await this.model('Stop').find({ _id: { $in: this.stops } });
+    const schedule = {
+      startTime: stops[0].estimatedTime,
+      endTime: stops[stops.length - 1].estimatedTime,
+      frequency: 30, // Example: 30 minutes
+      isActive: true
+    };
+    this.schedule = schedule;
+  }
+  // Example: Update performance based on trip data
+  const performance = {
+    averageSpeed: 60, // Example: 60 km/h
+    onTimePercentage: 95, // Example: 95%
+    passengerSatisfaction: 4.5, // Example: 4.5 out of 5
+    totalTrips: this.totalTrips || 0
+  };
+  this.performance = performance;
+  next();
 });
 
 module.exports = mongoose.model('Course', CourseSchema);

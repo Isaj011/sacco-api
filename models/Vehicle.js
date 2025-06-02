@@ -52,8 +52,7 @@ const VehicleSchema = new mongoose.Schema({
   // Route and operation details
   assignedRoute: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Course',
-    required: [true, 'Please add the assigned route'],
+    ref: 'Course'
   },
   averageSpeed: {
     type: Number,
@@ -235,5 +234,9 @@ VehicleSchema.pre('save', function(next) {
   }
   next();
 });
+
+// The following fields are system-managed and should not be set directly by user input:
+// assignedRoute, currentDriver, currentAssignment, estimatedArrivalTime, totalPassengersFerried, averageDailyIncome, totalIncome, totalTrips, mileage
+// These fields are updated by system logic or other backend processes.
 
 module.exports = mongoose.model('Vehicle', VehicleSchema)

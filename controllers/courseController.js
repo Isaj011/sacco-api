@@ -61,6 +61,13 @@ exports.createCourse = asyncHandler(async (req, res, next) => {
     }
   }
 
+  const systemFields = [
+    'maxCapacity',
+    'schedule',
+    'performance'
+  ];
+  systemFields.forEach(field => delete req.body[field]);
+
   const course = await Course.create(req.body);
 
   res.status(201).json({
@@ -101,6 +108,13 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
       );
     }
   }
+
+  const systemFields = [
+    'maxCapacity',
+    'schedule',
+    'performance'
+  ];
+  systemFields.forEach(field => delete req.body[field]);
 
   course = await Course.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

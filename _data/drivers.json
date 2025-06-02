@@ -1,0 +1,322 @@
+[
+  {
+    "driverName": "John Kamau",
+    "nationalId": "12345678",
+    "contactDetails": {
+      "phone": "+254712345678",
+      "email": "john.kamau@example.com",
+      "address": "123 Mombasa Road, Nairobi"
+    },
+    "bloodType": "O+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL12345678",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV12345678",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Mary Kamau",
+        "relationship": "Spouse",
+        "phone": "+254723456789",
+        "isPrimary": true
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "driverName": "Peter Ochieng",
+    "nationalId": "23456789",
+    "contactDetails": {
+      "phone": "+254723456789",
+      "email": "peter.ochieng@example.com",
+      "address": "456 Thika Road, Nairobi"
+    },
+    "bloodType": "A+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL23456789",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV23456789",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Sarah Ochieng",
+        "relationship": "Spouse",
+        "phone": "+254734567890",
+        "isPrimary": true
+      }
+    ],
+    "status": "verified"
+  },
+  {
+    "driverName": "James Mwangi",
+    "nationalId": "34567890",
+    "contactDetails": {
+      "phone": "+254734567890",
+      "email": "james.mwangi@example.com",
+      "address": "789 Ngong Road, Nairobi"
+    },
+    "bloodType": "B+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL34567890",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV34567890",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Jane Mwangi",
+        "relationship": "Spouse",
+        "phone": "+254745678901",
+        "isPrimary": true
+      }
+    ],
+    "status": "assigned"
+  },
+  {
+    "driverName": "David Njoroge",
+    "nationalId": "45678901",
+    "contactDetails": {
+      "phone": "+254745678901",
+      "email": "david.njoroge@example.com",
+      "address": "321 Juja Road, Nairobi"
+    },
+    "bloodType": "AB+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL45678901",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV45678901",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Grace Njoroge",
+        "relationship": "Spouse",
+        "phone": "+254756789012",
+        "isPrimary": true
+      }
+    ],
+    "status": "registered"
+  },
+  {
+    "driverName": "Michael Wanjiku",
+    "nationalId": "56789012",
+    "contactDetails": {
+      "phone": "+254756789012",
+      "email": "michael.wanjiku@example.com",
+      "address": "654 Ruiru Road, Nairobi"
+    },
+    "bloodType": "O-",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL56789012",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV56789012",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Lucy Wanjiku",
+        "relationship": "Spouse",
+        "phone": "+254767890123",
+        "isPrimary": true
+      }
+    ],
+    "status": "inactive"
+  },
+  {
+    "driverName": "Robert Kariuki",
+    "nationalId": "67890123",
+    "contactDetails": {
+      "phone": "+254767890123",
+      "email": "robert.kariuki@example.com",
+      "address": "987 Buruburu Road, Nairobi"
+    },
+    "bloodType": "A-",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL67890123",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV67890123",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Ann Kariuki",
+        "relationship": "Spouse",
+        "phone": "+254778901234",
+        "isPrimary": true
+      }
+    ],
+    "status": "verified"
+  },
+  {
+    "driverName": "Daniel Muthee",
+    "nationalId": "78901234",
+    "contactDetails": {
+      "phone": "+254778901234",
+      "email": "daniel.muthee@example.com",
+      "address": "741 Donholm Road, Nairobi"
+    },
+    "bloodType": "B-",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL78901234",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV78901234",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Ruth Muthee",
+        "relationship": "Spouse",
+        "phone": "+254789012345",
+        "isPrimary": true
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "driverName": "Joseph Kamau",
+    "nationalId": "89012345",
+    "contactDetails": {
+      "phone": "+254789012345",
+      "email": "joseph.kamau@example.com",
+      "address": "852 Komarock Road, Nairobi"
+    },
+    "bloodType": "AB-",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL89012345",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV89012345",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Susan Kamau",
+        "relationship": "Spouse",
+        "phone": "+254790123456",
+        "isPrimary": true
+      }
+    ],
+    "status": "assigned"
+  },
+  {
+    "driverName": "Patrick Njoroge",
+    "nationalId": "90123456",
+    "contactDetails": {
+      "phone": "+254790123456",
+      "email": "patrick.njoroge@example.com",
+      "address": "963 Ngong Road, Nairobi"
+    },
+    "bloodType": "O+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL90123456",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV90123456",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Esther Njoroge",
+        "relationship": "Spouse",
+        "phone": "+254701234567",
+        "isPrimary": true
+      }
+    ],
+    "status": "registered"
+  },
+  {
+    "driverName": "Samuel Kariuki",
+    "nationalId": "01234567",
+    "contactDetails": {
+      "phone": "+254701234567",
+      "email": "samuel.kariuki@example.com",
+      "address": "159 Kasarani Road, Nairobi"
+    },
+    "bloodType": "A+",
+    "medicalConditions": ["None"],
+    "allergies": ["None"],
+    "driverLicense": {
+      "number": "DL01234567",
+      "expiryDate": "2025-12-31"
+    },
+    "psvLicense": {
+      "number": "PSV01234567",
+      "expiryDate": "2025-12-31"
+    },
+    "medicalCertificate": {
+      "expiryDate": "2024-12-31"
+    },
+    "emergencyContacts": [
+      {
+        "name": "Faith Kariuki",
+        "relationship": "Spouse",
+        "phone": "+254711234568",
+        "isPrimary": true
+      }
+    ],
+    "status": "inactive"
+  }
+] 

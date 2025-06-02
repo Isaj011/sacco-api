@@ -37,6 +37,7 @@ const stops = require('./routes/stops')
 const schedules = require('./routes/schedules')
 const fares = require('./routes/fares')
 const performances = require('./routes/performances')
+const drivers = require('./routes/driverRoutes')
 
 const app = express()
 
@@ -173,6 +174,7 @@ app.use('/api/v1/stops', stops)
 app.use('/api/v1/schedules', schedules)
 app.use('/api/v1/fares', fares)
 app.use('/api/v1/performances', performances)
+app.use('/api/v1/drivers', drivers)
 
 app.use(errorHandler)
 

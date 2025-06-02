@@ -3,6 +3,7 @@ const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const Vehicle = require('../models/Vehicle')
 const Course = require('../models/Course')
+const Driver = require('../models/Driver')
 // @desc      Get all vehicles
 // @route     GET  /api/v1/vehicles
 // @access    public
@@ -15,6 +16,8 @@ exports.getVehicles = asyncHandler(async (req, res, next) => {
 // @access    public
 exports.getVehicle = asyncHandler(async (req, res, next) => {
   const vehicle = await Vehicle.findById(req.params.id)
+    .populate('currentDriver', 'driverName nationalId contactDetails driverLicense psvLicense status')
+    .populate('assignedRoute', 'routeName routeNumber')
 
   if (!vehicle) {
     return next(
@@ -50,7 +53,7 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
     'plateNumber',
     'vehicleModel',
     'vehicleCondition',
-    'driverName',
+    'driver',
     'seatingCapacity',
     'assignedRoute',
     'averageSpeed',
@@ -63,6 +66,14 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
         new ErrorResponse(`Please provide ${field}`, 400)
       )
     }
+  }
+
+  // Validate driver exists
+  const driver = await Driver.findById(req.body.driver)
+  if (!driver) {
+    return next(
+      new ErrorResponse(`Driver with ID ${req.body.driver} not found`, 404)
+    )
   }
 
   // Validate numeric fields

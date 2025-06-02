@@ -16,7 +16,7 @@ exports.getVehicles = asyncHandler(async (req, res, next) => {
 // @access    public
 exports.getVehicle = asyncHandler(async (req, res, next) => {
   const vehicle = await Vehicle.findById(req.params.id)
-    .populate('driver', 'driverName nationalId contactDetails driverLicense psvLicense status')
+    .populate('currentDriver', 'driverName nationalId contactDetails driverLicense psvLicense status')
     .populate('assignedRoute', 'routeName routeNumber')
 
   if (!vehicle) {

@@ -209,5 +209,5 @@ const sendTokenResponse = (user, statusCode, res, isFirstLogin) => {
 
   res
     .status(statusCode)
-    .json({ success: true, token, isFirstLogin })
+    .json({ success: true, token, isFirstLogin, id: user._id })
 }

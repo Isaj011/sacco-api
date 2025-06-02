@@ -1,4 +1,13 @@
 const mongoose = require('mongoose');
+const Driver = require('./Driver');  // Add this import
+
+// Create a counter schema for employee IDs
+const counterSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.model('Counter', counterSchema);
 
 const driverAssignmentSchema = new mongoose.Schema({
   driverId: {
@@ -11,6 +20,10 @@ const driverAssignmentSchema = new mongoose.Schema({
   employeeId: {
     type: String,
     unique: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   salary: {
     amount: {
@@ -155,30 +168,89 @@ driverAssignmentSchema.index({ driverId: 1 });
 driverAssignmentSchema.index({ 'vehicleAssignment.busNumber': 1 });
 driverAssignmentSchema.index({ 'vehicleAssignment.routeAssigned': 1 });
 
-// Static method to generate next employee ID
-driverAssignmentSchema.statics.generateNextEmployeeId = async function() {
+// Static method to generate or retrieve employee ID
+driverAssignmentSchema.statics.getEmployeeId = async function(driverId) {
+  // First check if driver already has an employeeId
+  const driver = await Driver.findById(driverId);
+  
+  if (driver && driver.employeeId) {
+    return driver.employeeId;
+  }
+
+  // If no existing employeeId, check previous assignments
+  const previousAssignment = await this.findOne({ 
+    driverId,
+    employeeId: { $exists: true, $ne: null }
+  }).sort({ createdAt: -1 });
+
+  if (previousAssignment && previousAssignment.employeeId) {
+    return previousAssignment.employeeId;
+  }
+
+  // If no previous assignment, generate new employeeId
   const prefix = 'EMP';
   const year = new Date().getFullYear().toString().slice(-2);
   
-  const latestAssignment = await this.findOne()
-    .sort({ employeeId: -1 })
-    .select('employeeId');
+  // Get total count of assignments for this year
+  const yearPrefix = `${prefix}-${year}`;
+  const count = await this.countDocuments({
+    employeeId: new RegExp(`^${yearPrefix}`)
+  });
   
-  let sequence = 1;
-  if (latestAssignment && latestAssignment.employeeId) {
-    const latestSequence = parseInt(latestAssignment.employeeId.slice(-4));
-    sequence = latestSequence + 1;
-  }
-  
-  return `${prefix}-${year}-${sequence.toString().padStart(4, '0')}`;
+  return `${yearPrefix}-${(count + 1).toString().padStart(4, '0')}`;
 };
 
-// Pre-save middleware to ensure employeeId is set
+// Pre-save middleware to ensure employeeId is set and synced with Driver
 driverAssignmentSchema.pre('save', async function(next) {
-  if (!this.employeeId) {
-    this.employeeId = await this.constructor.generateNextEmployeeId();
+  try {
+    if (!this.employeeId) {
+      this.employeeId = await this.constructor.getEmployeeId(this.driverId);
+    }
+
+    // Update the Driver's employeeId
+    await Driver.findByIdAndUpdate(this.driverId, {
+      employeeId: this.employeeId,
+      status: 'assigned'
+    });
+
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
+});
+
+// Post-remove middleware to clear Driver's employeeId if no active assignments
+driverAssignmentSchema.post('remove', async function() {
+  try {
+    const Driver = mongoose.model('Driver');
+    const Vehicle = mongoose.model('Vehicle');
+
+    // Check if driver has any other active assignments
+    const activeAssignments = await this.constructor.countDocuments({
+      driverId: this.driverId,
+      isActive: true
+    });
+
+    // If no active assignments, update driver status but keep employeeId
+    if (activeAssignments === 0) {
+      await Driver.findByIdAndUpdate(this.driverId, {
+        status: 'inactive'
+        // Don't clear employeeId anymore
+      });
+    }
+
+    // Update vehicle status
+    await Vehicle.findByIdAndUpdate(
+      this.vehicleAssignment.busNumber,
+      { 
+        $unset: { currentAssignment: 1 },
+        $unset: { currentDriver: 1 },
+        status: 'available'
+      }
+    );
+  } catch (error) {
+    console.error('Error in post-remove middleware:', error);
+  }
 });
 
 // Middleware to update Vehicle's driverAssignment field
@@ -188,8 +260,9 @@ driverAssignmentSchema.post('save', async function() {
     await Vehicle.findByIdAndUpdate(
       this.vehicleAssignment.busNumber,
       { 
-        driverAssignment: this._id,
-        driver: this.driverId
+        currentAssignment: this._id,
+        currentDriver: this.driverId,
+        status: 'in_use'
       }
     );
   } catch (error) {
@@ -201,13 +274,22 @@ driverAssignmentSchema.post('save', async function() {
 driverAssignmentSchema.post('remove', async function() {
   try {
     const Vehicle = mongoose.model('Vehicle');
-    await Vehicle.findByIdAndUpdate(
-      this.vehicleAssignment.busNumber,
-      { 
-        $unset: { driverAssignment: 1 },
-        $unset: { driver: 1 }
+    const vehicle = await Vehicle.findById(this.vehicleAssignment.busNumber);
+    
+    if (vehicle) {
+      // Only update vehicle if this was its current assignment
+      if (vehicle.currentAssignment && 
+          vehicle.currentAssignment.toString() === this._id.toString()) {
+        await Vehicle.findByIdAndUpdate(
+          this.vehicleAssignment.busNumber,
+          { 
+            $unset: { currentAssignment: 1 },
+            $unset: { currentDriver: 1 },
+            status: 'available'
+          }
+        );
       }
-    );
+    }
   } catch (error) {
     console.error('Error removing Vehicle driverAssignment:', error);
   }

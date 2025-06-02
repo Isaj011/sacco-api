@@ -33,12 +33,12 @@ const VehicleSchema = new mongoose.Schema({
   },
 
   // Driver and capacity information
-  driver: {
+  currentDriver: {
     type: mongoose.Schema.ObjectId,
     ref: 'Driver',
-    required: [true, 'Please add the assigned driver'],
+    default: null
   },
-  driverAssignment: {
+  currentAssignment: {
     type: mongoose.Schema.ObjectId,
     ref: 'DriverAssignment',
     default: null
@@ -66,6 +66,28 @@ const VehicleSchema = new mongoose.Schema({
     required: [true, 'Please add estimated arrival time'],
     default: 'Not Available',
   },
+
+  // Status tracking
+  status: {
+    type: String,
+    enum: ['available', 'in_use', 'maintenance', 'out_of_service'],
+    default: 'available'
+  },
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: ['available', 'in_use', 'maintenance', 'out_of_service']
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    reason: String,
+    updatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    }
+  }],
 
   // Performance metrics
   totalPassengersFerried: {
@@ -124,30 +146,52 @@ const VehicleSchema = new mongoose.Schema({
     default: 'no-photo.jpg',
   },
 
-  // System fields
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  // System Fields
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
+  },
+  updatedAt: { 
+    type: Date, 
+    default: Date.now 
   },
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
-})
+}, {
+  timestamps: true
+});
 
-// Create vehicle slug from the plate number
-VehicleSchema.pre('save', function (next) {
-  this.slug = slugify(this.plateNumber, { lower: true })
-  next()
-})
+// Add indexes for frequently queried fields
+VehicleSchema.index({ plateNumber: 1 });
+VehicleSchema.index({ status: 1 });
+VehicleSchema.index({ currentDriver: 1 });
+
+// Pre-save middleware to update the updatedAt field
+VehicleSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Method to update vehicle status
+VehicleSchema.methods.updateStatus = async function(newStatus, reason, updatedBy) {
+  this.status = newStatus;
+  this.statusHistory.push({
+    status: newStatus,
+    reason,
+    updatedBy
+  });
+  return this.save();
+};
 
 // Populate middleware
 VehicleSchema.pre('find', function(next) {
   this.populate([
     { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'driver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'driverAssignment', select: 'employeeId salary vehicleAssignment' }
+    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
+    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
   ]);
   next();
 });
@@ -155,8 +199,8 @@ VehicleSchema.pre('find', function(next) {
 VehicleSchema.pre('findOne', function(next) {
   this.populate([
     { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'driver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'driverAssignment', select: 'employeeId salary vehicleAssignment' }
+    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
+    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
   ]);
   next();
 });

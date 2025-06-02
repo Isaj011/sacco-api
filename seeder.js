@@ -44,11 +44,27 @@ const performances = JSON.parse(
 )
 
 // Connect to DB
-mongoose.connect(process.env.MONGO_URI)
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    });
+
+    console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline.bold);
+  } catch (error) {
+    console.error(`Error: ${error.message}`.red.underline.bold);
+    process.exit(1);
+  }
+};
 
 // Import into DB
 const importData = async () => {
   try {
+    await connectDB();
+    
     // Clear existing data
     await User.deleteMany()
     await Driver.deleteMany()
@@ -111,7 +127,8 @@ const importData = async () => {
     const createdDrivers = await Driver.create(
       drivers.map(driver => ({
         ...driver,
-        status: 'registered'
+        status: driver.status || 'registered'
+        // employeeId will be undefined by default
       }))
     )
     console.log('Drivers created...'.green.inverse)
@@ -119,59 +136,66 @@ const importData = async () => {
     // Create vehicles first
     const createdVehicles = await Vehicle.create(
       vehicles.map((vehicle, index) => {
-        const driver = createdDrivers[index % createdDrivers.length]
-        const course = createdCourses[index % createdCourses.length]
+        const course = createdCourses[index % createdCourses.length];
 
         return {
           ...vehicle,
           user: createdUsers[0]._id,
-          driver: driver._id,
-          assignedRoute: course._id
+          assignedRoute: course._id,
+          status: 'available'  // Set initial status to available
         }
       })
     )
     console.log('Vehicles created...'.green.inverse)
 
     // Create driver assignments with vehicle references
-    const assignments = createdDrivers.map((driver, index) => {
-      const course = createdCourses[index % createdCourses.length]
-      const vehicle = createdVehicles[index % createdVehicles.length]
+    const assignments = createdDrivers
+      .filter(driver => ['active', 'assigned'].includes(driver.status))
+      .map((driver, index) => {
+        const course = createdCourses[index % createdCourses.length];
+        const vehicle = createdVehicles[index % createdVehicles.length];
+        const year = new Date().getFullYear().toString().slice(-2);
+        const employeeId = `EMP-${year}-${(index + 1).toString().padStart(4, '0')}`;
 
-      return {
-        driverId: driver._id,
-        employeeId: `EMP${String(index + 1).padStart(3, '0')}`,
-        salary: {
-          amount: 50000 + (index * 5000),
-          currency: 'KES',
-          paymentFrequency: 'monthly'
-        },
-        vehicleAssignment: {
-          busNumber: vehicle._id,
-          vehicleType: vehicle.vehicleModel,
-          routeAssigned: course._id,
-          assignmentDate: new Date(),
-          assignedBy: createdUsers[0]._id
-        }
-      }
-    })
+        return {
+          driverId: driver._id,
+          employeeId,
+          isActive: true,
+          salary: {
+            amount: 50000 + (index * 5000),
+            currency: 'KES',
+            paymentFrequency: 'monthly'
+          },
+          vehicleAssignment: {
+            busNumber: vehicle._id,
+            vehicleType: vehicle.vehicleModel,
+            routeAssigned: course._id,
+            assignmentDate: new Date(),
+            assignedBy: createdUsers[0]._id
+          }
+        };
+      });
 
-    const createdAssignments = await DriverAssignment.create(assignments)
-    console.log('Driver assignments created...'.green.inverse)
+    const createdAssignments = await DriverAssignment.create(assignments);
+    console.log('Driver assignments created...'.green.inverse);
+
+    // Update drivers with their employeeIds and status
+    for (const assignment of createdAssignments) {
+      await Driver.findByIdAndUpdate(assignment.driverId, {
+        employeeId: assignment.employeeId,
+        status: 'assigned'
+      });
+    }
 
     // Update vehicles with driver assignment references
     for (let i = 0; i < createdVehicles.length; i++) {
+      const assignment = createdAssignments[i % createdAssignments.length];
       await Vehicle.findByIdAndUpdate(createdVehicles[i]._id, {
-        driverAssignment: createdAssignments[i % createdAssignments.length]._id
-      })
+        driverAssignment: assignment._id,
+        driver: assignment.driverId,
+        status: 'in_use'
+      });
     }
-    console.log('Vehicles updated with driver assignments...'.green.inverse)
-
-    // Update driver statuses to 'assigned'
-    await Driver.updateMany(
-      { _id: { $in: createdDrivers.map(d => d._id) } },
-      { $set: { status: 'assigned' } }
-    )
-    console.log('Driver statuses updated...'.green.inverse)
 
     // Update courses with vehicle references
     for (let i = 0; i < createdCourses.length; i++) {
@@ -195,6 +219,8 @@ const importData = async () => {
 // Delete data
 const deleteData = async () => {
   try {
+    await connectDB();
+    
     await User.deleteMany()
     await Driver.deleteMany()
     await Vehicle.deleteMany()

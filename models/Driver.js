@@ -7,6 +7,10 @@ const driverSchema = new mongoose.Schema({
     required: [true, 'Driver name is required'],
     trim: true 
   },
+  employeeId: {
+    type: String,
+    sparse: true // Allows undefined values
+  },
   nationalId: { 
     type: String, 
     required: [true, 'National ID is required'],

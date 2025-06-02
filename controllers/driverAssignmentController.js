@@ -17,30 +17,31 @@ exports.createAssignment = async (req, res) => {
       });
     }
 
-    // Check if driver already has an assignment
-    const existingAssignment = await DriverAssignment.findOne({ driverId });
+    // Check if driver already has an active assignment
+    const existingAssignment = await DriverAssignment.findOne({ 
+      driverId,
+      isActive: true 
+    });
     if (existingAssignment) {
       return res.status(400).json({
         success: false,
-        error: 'Driver already has an assignment'
+        error: 'Driver already has an active assignment'
       });
     }
 
-    // Check if vehicle is available
-    const vehicle = await Vehicle.findOne({ 
-      busNumber: assignmentData.vehicleAssignment.busNumber,
-      status: 'available'
-    });
+    // Check if vehicle exists
+    const vehicle = await Vehicle.findById(assignmentData.vehicleAssignment.busNumber);
     if (!vehicle) {
       return res.status(400).json({
         success: false,
-        error: 'Vehicle is not available for assignment'
+        error: 'Vehicle not found'
       });
     }
 
-    // Create new assignment (employeeId will be generated automatically)
+    // Create new assignment
     const assignment = new DriverAssignment({
       driverId,
+      isActive: true,
       ...assignmentData
     });
 
@@ -51,7 +52,7 @@ exports.createAssignment = async (req, res) => {
     await driver.save();
 
     // Update vehicle status
-    vehicle.status = 'assigned';
+    vehicle.status = 'in_use';
     await vehicle.save();
 
     res.status(201).json({
@@ -69,47 +70,92 @@ exports.createAssignment = async (req, res) => {
 // Update administrative assignment
 exports.updateAssignment = async (req, res) => {
   try {
-    const driverId = req.params.id;
+    const assignmentId = req.params.id;  // This is actually the assignment ID
     const updates = req.body;
 
-    const assignment = await DriverAssignment.findOne({ driverId });
-    if (!assignment) {
+    console.log('Assignment ID from URL:', assignmentId);
+    console.log('Driver ID from request body:', updates.driverId);
+
+    // Check if driver exists with more detailed error handling
+    const driver = await Driver.findById(updates.driverId).exec();
+    if (!driver) {
+      console.log('Driver not found with ID:', updates.driverId);
       return res.status(404).json({
         success: false,
-        error: 'Assignment not found'
+        error: 'Driver not found',
+        details: {
+          driverId: updates.driverId,
+          message: 'No driver exists with this ID'
+        }
       });
     }
 
-    // If vehicle is being changed, check availability
-    if (updates.vehicleAssignment?.busNumber && 
-        updates.vehicleAssignment.busNumber !== assignment.vehicleAssignment.busNumber) {
-      const vehicle = await Vehicle.findOne({ 
-        busNumber: updates.vehicleAssignment.busNumber,
-        status: 'available'
-      });
+    console.log('Found driver:', driver.driverName);
+
+    let assignment = await DriverAssignment.findOne({ 
+      _id: assignmentId,
+      isActive: true 
+    });
+
+    // If no active assignment exists, create a new one
+    if (!assignment) {
+      // Check if vehicle exists
+      const vehicle = await Vehicle.findById(updates.vehicleAssignment.busNumber);
       if (!vehicle) {
         return res.status(400).json({
           success: false,
-          error: 'New vehicle is not available for assignment'
+          error: 'Vehicle not found'
+        });
+      }
+
+      // Create new assignment
+      assignment = new DriverAssignment({
+        driverId: updates.driverId,
+        isActive: true,
+        ...updates
+      });
+
+      await assignment.save();
+
+      // Update driver status
+      driver.status = 'assigned';
+      await driver.save();
+
+      // Update vehicle status
+      vehicle.status = 'in_use';
+      await vehicle.save();
+
+      return res.status(201).json({
+        success: true,
+        data: assignment
+      });
+    }
+
+    // If vehicle is being changed, update vehicle statuses
+    if (updates.vehicleAssignment?.busNumber && 
+        updates.vehicleAssignment.busNumber !== assignment.vehicleAssignment.busNumber) {
+      const vehicle = await Vehicle.findById(updates.vehicleAssignment.busNumber);
+      if (!vehicle) {
+        return res.status(400).json({
+          success: false,
+          error: 'New vehicle not found'
         });
       }
 
       // Update old vehicle status
-      const oldVehicle = await Vehicle.findOne({ 
-        busNumber: assignment.vehicleAssignment.busNumber 
-      });
+      const oldVehicle = await Vehicle.findById(assignment.vehicleAssignment.busNumber);
       if (oldVehicle) {
         oldVehicle.status = 'available';
         await oldVehicle.save();
       }
 
       // Update new vehicle status
-      vehicle.status = 'assigned';
+      vehicle.status = 'in_use';
       await vehicle.save();
     }
 
     const updatedAssignment = await DriverAssignment.findOneAndUpdate(
-      { driverId },
+      { _id: assignmentId, isActive: true },
       { $set: updates },
       { new: true, runValidators: true }
     );
@@ -117,6 +163,57 @@ exports.updateAssignment = async (req, res) => {
     res.status(200).json({
       success: true,
       data: updatedAssignment
+    });
+  } catch (error) {
+    console.error('Error in updateAssignment:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: {
+        message: 'Error occurred while updating assignment',
+        stack: error.stack
+      }
+    });
+  }
+};
+
+// Deactivate assignment
+exports.deactivateAssignment = async (req, res) => {
+  try {
+    const driverId = req.params.id;
+
+    const assignment = await DriverAssignment.findOne({ 
+      driverId,
+      isActive: true 
+    });
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Active assignment not found'
+      });
+    }
+
+    // Update assignment status
+    assignment.isActive = false;
+    await assignment.save();
+
+    // Update driver status
+    const driver = await Driver.findById(driverId);
+    if (driver) {
+      driver.status = 'inactive';
+      await driver.save();
+    }
+
+    // Update vehicle status
+    const vehicle = await Vehicle.findById(assignment.vehicleAssignment.busNumber);
+    if (vehicle) {
+      vehicle.status = 'available';
+      await vehicle.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      data: assignment
     });
   } catch (error) {
     res.status(500).json({

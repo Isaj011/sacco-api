@@ -29,8 +29,10 @@ exports.createAssignment = async (req, res) => {
       });
     }
 
-    // Check if vehicle exists
-    const vehicle = await Vehicle.findById(assignmentData.vehicleAssignment.busNumber);
+    // Check if vehicle exists and get its details
+    const vehicle = await Vehicle.findById(assignmentData.vehicleAssignment.busNumber)
+      .populate('assignedRoute');
+    
     if (!vehicle) {
       return res.status(400).json({
         success: false,
@@ -38,11 +40,20 @@ exports.createAssignment = async (req, res) => {
       });
     }
 
-    // Create new assignment
+    // Ensure vehicleAssignment has all required fields
+    const vehicleAssignment = {
+      ...assignmentData.vehicleAssignment,
+      vehicleType: vehicle.vehicleModel,
+      routeAssigned: vehicle.assignedRoute ? vehicle.assignedRoute._id : assignmentData.vehicleAssignment.routeAssigned,
+      assignedBy: req.user.id
+    };
+
+    // Create new assignment with complete vehicleAssignment data
     const assignment = new DriverAssignment({
       driverId,
       isActive: true,
-      ...assignmentData
+      ...assignmentData,
+      vehicleAssignment
     });
 
     await assignment.save();
@@ -60,6 +71,7 @@ exports.createAssignment = async (req, res) => {
       data: assignment
     });
   } catch (error) {
+    console.error('Error in createAssignment:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -228,7 +240,11 @@ exports.getAssignment = async (req, res) => {
   try {
     const driverId = req.params.id;
 
-    const assignment = await DriverAssignment.findOne({ driverId });
+    const assignment = await DriverAssignment.findOne({ driverId })
+      .populate('vehicleAssignment.busNumber', '-__v')
+      .populate('vehicleAssignment.routeAssigned', '-__v')
+      .populate('vehicleAssignment.assignedBy', '-__v');
+
     if (!assignment) {
       return res.status(404).json({
         success: false,
@@ -236,9 +252,22 @@ exports.getAssignment = async (req, res) => {
       });
     }
 
+    // Transform the response to include route information
+    const assignmentObj = assignment.toObject();
+    const { vehicleAssignment, ...rest } = assignmentObj;
+    const { routeAssigned, ...vehicleAssignmentRest } = vehicleAssignment;
+
+    const transformedAssignment = {
+      ...rest,
+      vehicleAssignment: {
+        ...vehicleAssignmentRest,
+        route: routeAssigned // Include route information
+      }
+    };
+
     res.status(200).json({
       success: true,
-      data: assignment
+      data: transformedAssignment
     });
   } catch (error) {
     res.status(500).json({
@@ -516,9 +545,10 @@ exports.getAllAssignments = async (req, res) => {
         model: 'Driver'
       })
       .populate('vehicleAssignment.busNumber', '-__v')
+      .populate('vehicleAssignment.routeAssigned', '-__v')
       .populate('vehicleAssignment.assignedBy', '-__v');
 
-    // Transform the response to rename driverId to driver and remove routeAssigned
+    // Transform the response to include route information
     const transformedAssignments = assignments.map(assignment => {
       const assignmentObj = assignment.toObject();
       const { vehicleAssignment, ...rest } = assignmentObj;
@@ -528,7 +558,10 @@ exports.getAllAssignments = async (req, res) => {
         ...rest,
         driver: assignmentObj.driverId,
         driverId: undefined, // Remove the old field
-        vehicleAssignment: vehicleAssignmentRest
+        vehicleAssignment: {
+          ...vehicleAssignmentRest,
+          route: routeAssigned // Include route information
+        }
       };
     });
 

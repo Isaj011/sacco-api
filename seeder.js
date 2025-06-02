@@ -149,13 +149,21 @@ const importData = async () => {
     console.log('Vehicles created...'.green.inverse)
 
     // Create driver assignments with vehicle references
-    const assignments = createdDrivers
+    const assignments = await Promise.all(createdDrivers
       .filter(driver => ['active', 'assigned'].includes(driver.status))
-      .map((driver, index) => {
+      .map(async (driver, index) => {
         const course = createdCourses[index % createdCourses.length];
         const vehicle = createdVehicles[index % createdVehicles.length];
         const year = new Date().getFullYear().toString().slice(-2);
         const employeeId = `EMP-${year}-${(index + 1).toString().padStart(4, '0')}`;
+
+        // Ensure vehicle has route assigned
+        if (!vehicle.assignedRoute) {
+          await Vehicle.findByIdAndUpdate(vehicle._id, {
+            assignedRoute: course._id,
+            status: 'in_use'
+          });
+        }
 
         return {
           driverId: driver._id,
@@ -174,7 +182,7 @@ const importData = async () => {
             assignedBy: createdUsers[0]._id
           }
         };
-      });
+      }));
 
     const createdAssignments = await DriverAssignment.create(assignments);
     console.log('Driver assignments created...'.green.inverse);
@@ -191,8 +199,8 @@ const importData = async () => {
     for (let i = 0; i < createdVehicles.length; i++) {
       const assignment = createdAssignments[i % createdAssignments.length];
       await Vehicle.findByIdAndUpdate(createdVehicles[i]._id, {
-        driverAssignment: assignment._id,
-        driver: assignment.driverId,
+        currentAssignment: assignment._id,
+        currentDriver: assignment.driverId,
         status: 'in_use'
       });
     }

@@ -53,12 +53,23 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
     'plateNumber',
     'vehicleModel',
     'vehicleCondition',
-    'driver',
     'seatingCapacity',
-    'assignedRoute',
-    'averageSpeed',
-    'estimatedArrivalTime'
+    'averageSpeed'
   ]
+
+  // Remove system fields from req.body
+  const systemFields = [
+    'assignedRoute',
+    'currentDriver',
+    'currentAssignment',
+    'estimatedArrivalTime',
+    'totalPassengersFerried',
+    'averageDailyIncome',
+    'totalIncome',
+    'totalTrips',
+    'mileage'
+  ];
+  systemFields.forEach(field => delete req.body[field]);
 
   for (const field of requiredFields) {
     if (!req.body[field]) {
@@ -66,14 +77,6 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
         new ErrorResponse(`Please provide ${field}`, 400)
       )
     }
-  }
-
-  // Validate driver exists
-  const driver = await Driver.findById(req.body.driver)
-  if (!driver) {
-    return next(
-      new ErrorResponse(`Driver with ID ${req.body.driver} not found`, 404)
-    )
   }
 
   // Validate numeric fields
@@ -108,14 +111,6 @@ exports.createVehicle = asyncHandler(async (req, res, next) => {
   if (req.body.fuelType && !validFuelTypes.includes(req.body.fuelType)) {
     return next(
       new ErrorResponse(`Invalid fuel type. Must be one of: ${validFuelTypes.join(', ')}`, 400)
-    )
-  }
-
-  // Validate assignedRoute exists
-  const course = await Course.findById(req.body.assignedRoute);
-  if (!course) {
-    return next(
-      new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)
     )
   }
 

@@ -19,7 +19,11 @@ exports.getCourses = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/courses/:id
 // @access  Public
 exports.getCourse = asyncHandler(async (req, res, next) => {
-  const course = res.advancedResults.data;
+  let course = await Course.findById(req.params.id)
+    .populate({
+      path: 'assignedVehicles',
+      select: 'plateNumber vehicleModel currentLocation driverName seatingCapacity',
+    });
 
   if (!course) {
     return next(
@@ -120,6 +124,13 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
     new: true,
     runValidators: true
   });
+
+  // Populate assignedVehicles with currentLocation and other info
+  course = await Course.findById(course._id)
+    .populate({
+      path: 'assignedVehicles',
+      select: 'plateNumber vehicleModel currentLocation driverName seatingCapacity',
+    });
 
   res.status(200).json({
     success: true,

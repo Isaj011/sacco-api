@@ -27,9 +27,24 @@ const VehicleSchema = new mongoose.Schema({
     default: true,
   },
   currentLocation: {
-    type: String,
-    required: [true, 'Please add current location'],
-    default: 'Not Available',
+    latitude: {
+      type: Number,
+      required: false,
+      min: -90,
+      max: 90,
+      default: -1.2921, // Default to Nairobi CBD
+    },
+    longitude: {
+      type: Number,
+      required: false,
+      min: -180,
+      max: 180,
+      default: 38.8219, // Default to Nairobi CBD
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    }
   },
 
   // Driver and capacity information

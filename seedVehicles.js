@@ -14,7 +14,7 @@ const sampleVehicles = [
       vehicleModel: "Toyota Hiace",
       vehicleCondition: "Good",
       operationalStatus: true,
-      currentLocation: "Nairobi CBD",
+      currentLocation: { latitude: -1.2921, longitude: 36.8219 }, // Nairobi CBD
       fuelType: "Petrol",
       insuranceExpiry: new Date("2025-11-30"),
       lastMaintenance: new Date("2025-03-20"),
@@ -29,7 +29,7 @@ const sampleVehicles = [
       vehicleModel: "Nissan Caravan",
       vehicleCondition: "Fair",
       operationalStatus: true,
-      currentLocation: "Thika Stage",
+      currentLocation: { latitude: -1.0333, longitude: 37.0693 }, // Thika Stage
       fuelType: "Diesel",
       insuranceExpiry: new Date("2025-12-15"),
       lastMaintenance: new Date("2025-03-10"),
@@ -44,7 +44,7 @@ const sampleVehicles = [
       vehicleModel: "Isuzu NPR",
       vehicleCondition: "Excellent",
       operationalStatus: true,
-      currentLocation: "Githurai",
+      currentLocation: { latitude: -1.1833, longitude: 36.9333 }, // Githurai
       fuelType: "Diesel",
       insuranceExpiry: new Date("2026-01-01"),
       lastMaintenance: new Date("2025-04-01"),
@@ -59,7 +59,7 @@ const sampleVehicles = [
       vehicleModel: "Toyota Coaster",
       vehicleCondition: "Good",
       operationalStatus: true,
-      currentLocation: "Ruiru Bypass",
+      currentLocation: { latitude: -1.1500, longitude: 36.9667 }, // Ruiru Bypass
       fuelType: "Diesel",
       insuranceExpiry: new Date("2025-10-12"),
       lastMaintenance: new Date("2025-02-20"),
@@ -74,7 +74,7 @@ const sampleVehicles = [
       vehicleModel: "Ford Transit",
       vehicleCondition: "Fair",
       operationalStatus: true,
-      currentLocation: "Garden City",
+      currentLocation: { latitude: -1.2211, longitude: 36.8867 }, // Garden City
       fuelType: "Petrol",
       insuranceExpiry: new Date("2025-09-01"),
       lastMaintenance: new Date("2025-01-15"),
@@ -89,7 +89,7 @@ const sampleVehicles = [
       vehicleModel: "Mazda Bongo",
       vehicleCondition: "Good",
       operationalStatus: true,
-      currentLocation: "Ngara",
+      currentLocation: { latitude: -1.2827, longitude: 36.8219 }, // Ngara
       fuelType: "Petrol",
       insuranceExpiry: new Date("2026-03-12"),
       lastMaintenance: new Date("2025-03-25"),
@@ -104,7 +104,7 @@ const sampleVehicles = [
       vehicleModel: "Hyundai County",
       vehicleCondition: "Excellent",
       operationalStatus: true,
-      currentLocation: "Roasters Roundabout",
+      currentLocation: { latitude: -1.2345, longitude: 36.8901 }, // Roasters Roundabout
       fuelType: "Diesel",
       insuranceExpiry: new Date("2025-08-30"),
       lastMaintenance: new Date("2025-02-28"),
@@ -119,7 +119,7 @@ const sampleVehicles = [
       vehicleModel: "Mercedes Sprinter",
       vehicleCondition: "Good",
       operationalStatus: true,
-      currentLocation: "Kasarani",
+      currentLocation: { latitude: -1.2500, longitude: 36.9000 }, // Kasarani
       fuelType: "Diesel",
       insuranceExpiry: new Date("2025-11-01"),
       lastMaintenance: new Date("2025-04-10"),
@@ -134,7 +134,7 @@ const sampleVehicles = [
       vehicleModel: "Suzuki Every",
       vehicleCondition: "Fair",
       operationalStatus: true,
-      currentLocation: "Muthaiga",
+      currentLocation: { latitude: -1.2667, longitude: 36.8167 }, // Muthaiga
       fuelType: "Petrol",
       insuranceExpiry: new Date("2025-07-20"),
       lastMaintenance: new Date("2025-03-01"),
@@ -149,7 +149,7 @@ const sampleVehicles = [
       vehicleModel: "Mitsubishi Rosa",
       vehicleCondition: "Good",
       operationalStatus: true,
-      currentLocation: "Roy Sambu",
+      currentLocation: { latitude: -1.2500, longitude: 36.9000 }, // Roy Sambu
       fuelType: "Diesel",
       insuranceExpiry: new Date("2025-06-15"),
       lastMaintenance: new Date("2025-03-18"),

@@ -4,6 +4,7 @@ const asyncHandler = require('../middleware/async')
 const Vehicle = require('../models/Vehicle')
 const Course = require('../models/Course')
 const Driver = require('../models/Driver')
+const VehicleLocationHistory = require('../models/VehicleLocationHistory')
 // @desc      Get all vehicles
 // @route     GET  /api/v1/vehicles
 // @access    public
@@ -185,6 +186,21 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
         new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)
       )
     }
+  }
+
+  // If currentLocation is being updated, also add to VehicleLocationHistory
+  if (req.body.currentLocation && req.body.currentLocation.latitude !== undefined && req.body.currentLocation.longitude !== undefined) {
+    await VehicleLocationHistory.create({
+      vehicleId: vehicle._id,
+      latitude: req.body.currentLocation.latitude,
+      longitude: req.body.currentLocation.longitude,
+      timestamp: new Date(),
+      // Optionally add speed, heading if available in req.body.currentLocation
+      speed: req.body.currentLocation.speed,
+      heading: req.body.currentLocation.heading
+    });
+    // Optionally update the updatedAt field
+    req.body.currentLocation.updatedAt = new Date();
   }
 
   vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {

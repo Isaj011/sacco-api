@@ -19,7 +19,7 @@ router.get('/', advancedResults(Course, [
   { path: 'schedule' },
   { path: 'fare' },
   { path: 'performance' },
-  { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+  { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
   { path: 'user', select: 'name email' }
 ]), getCourses);
 
@@ -32,7 +32,7 @@ router
     { path: 'schedule' },
     { path: 'fare' },
     { path: 'performance' },
-    { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity' },
+    { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
     { path: 'user', select: 'name email' }
   ]), getCourse)
   .put(protect, authorize('admin'), updateCourse)

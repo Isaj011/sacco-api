@@ -2,6 +2,9 @@ const mongoose = require('mongoose')
 const colors = require('colors')
 const dotenv = require('dotenv')
 const fs = require('fs')
+const { createSampleTriggers, getTriggerStats } = require('./utils/sampleLocationTriggers');
+require('./models/LocationTrigger');
+require('./models/VehicleLocationHistory');
 
 // Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -215,6 +218,34 @@ const importData = async () => {
       })
     }
     console.log('Course-vehicle relationships created...'.green.inverse)
+
+    // --- SEED LOCATION TRIGGERS ---
+    console.log('🌱 Seeding location triggers...'.yellow)
+    const adminUserId = createdUsers[0]._id;
+    const createdTriggers = await createSampleTriggers(adminUserId);
+    if (createdTriggers && createdTriggers.length > 0) {
+      console.log(`✅ Successfully created ${createdTriggers.length} location triggers`.green)
+    } else {
+      console.log('ℹ️ No new triggers created (they may already exist)'.blue)
+    }
+    // Show trigger stats
+    const stats = await getTriggerStats();
+    console.log('\n📊 Location Trigger Statistics:'.cyan)
+    console.log(`Total Triggers: ${stats.total}`.white)
+    console.log(`Active Triggers: ${stats.active}`.green)
+    console.log('\nBy Type:'.yellow)
+    stats.byType.forEach(type => {
+      console.log(`  ${type._id}: ${type.count} total, ${type.activeCount} active`.white)
+    })
+    console.log('\nBy Vehicle:'.yellow)
+    if (stats.byVehicle && stats.byVehicle.length > 0) {
+      stats.byVehicle.forEach(vehicle => {
+        console.log(`  ${vehicle._id}: ${vehicle.triggerCount} triggers, ${vehicle.activeTriggers} active`.white)
+      })
+    } else {
+      console.log('  No vehicle-specific triggers found'.gray)
+    }
+    // --- END SEED LOCATION TRIGGERS ---
 
     console.log('All data imported successfully!'.green.inverse)
     process.exit()

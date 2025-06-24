@@ -160,6 +160,55 @@ const VehicleSchema = new mongoose.Schema({
     default: 'no-photo.jpg',
   },
 
+  // Rich context data for Kenya Sacco operations
+  contextData: {
+    // Environmental conditions
+    weather: {
+      condition: String,
+      severity: String,
+      temperature: Number
+    },
+    traffic: {
+      level: String,
+      description: String
+    },
+    
+    // Performance metrics
+    performance: {
+      fuelEfficiency: Number,
+      idleTime: Number,
+      stopDuration: Number
+    },
+    
+    // Route information
+    route: {
+      routeId: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Course'
+      },
+      deviation: {
+        distance: Number,
+        duration: Number
+      }
+    },
+    
+    // Device health
+    deviceHealth: {
+      batteryLevel: Number,
+      signalStrength: Number,
+      accuracy: Number
+    },
+    
+    // Events and status
+    events: [String],
+    heading: Number,
+    source: {
+      type: String,
+      enum: ['gps', 'manual', 'system'],
+      default: 'system'
+    }
+  },
+
   // System Fields
   createdAt: { 
     type: Date, 
@@ -239,6 +288,65 @@ VehicleSchema.post('save', async function(next) {
     }
   } catch (error) {
     console.error('Error updating Course assignedVehicles:', error);
+  }
+});
+
+// Middleware to automatically create VehicleLocationHistory entries
+VehicleSchema.post('save', async function() {
+  try {
+    // Only create history entry if location or context data was updated
+    if (this.isModified('currentLocation') || this.isModified('contextData') || this.isModified('currentSpeed')) {
+      const VehicleLocationHistory = mongoose.model('VehicleLocationHistory');
+      
+      const historyData = {
+        vehicleId: this._id,
+        location: {
+          latitude: this.currentLocation.latitude,
+          longitude: this.currentLocation.longitude
+        },
+        timestamp: this.currentLocation.updatedAt || new Date(),
+        speed: {
+          current: this.currentSpeed,
+          average: this.averageSpeed,
+          max: this.contextData?.performance?.maxSpeed || this.currentSpeed
+        },
+        heading: this.contextData?.heading,
+        context: {
+          // Trigger information (will be populated by LocationTriggerService)
+          triggerType: null,
+          triggerId: null,
+          
+          // Event information
+          events: this.contextData?.events || [],
+          
+          // Environmental conditions
+          conditions: {
+            weather: this.contextData?.weather,
+            traffic: this.contextData?.traffic
+          },
+          
+          // Performance metrics
+          performance: this.contextData?.performance,
+          
+          // Route information
+          route: {
+            routeId: this.contextData?.route?.routeId || this.assignedRoute,
+            deviation: this.contextData?.route?.deviation
+          }
+        },
+        metadata: {
+          source: this.contextData?.source || 'system',
+          accuracy: this.contextData?.deviceHealth?.accuracy,
+          batteryLevel: this.contextData?.deviceHealth?.batteryLevel,
+          signalStrength: this.contextData?.deviceHealth?.signalStrength
+        }
+      };
+
+      await VehicleLocationHistory.create(historyData);
+      console.log(`📝 Auto-created VehicleLocationHistory for vehicle ${this.plateNumber || this._id}`);
+    }
+  } catch (error) {
+    console.error('Error creating VehicleLocationHistory entry:', error);
   }
 });
 

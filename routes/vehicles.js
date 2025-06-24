@@ -6,6 +6,8 @@ const {
   updateVehicle,
   deleteVehicle,
   vehiclePhotoUpload,
+  manualUpdateVehicleLocation,
+  getVehicleUpdateStatus,
 } = require('../controllers/vehicles')
 
 const Vehicle = require('../models/Vehicle')
@@ -35,4 +37,14 @@ router
   .get(getVehicle)
   .put(protect, authorize('publisher', 'admin'), updateVehicle)
   .delete(protect, authorize('publisher', 'admin'), deleteVehicle)
+
+// Manual update routes for testing
+router
+  .route('/:vehicleId/location')
+  .put(manualUpdateVehicleLocation)
+
+router
+  .route('/status/updates')
+  .get(getVehicleUpdateStatus)
+
 module.exports = router

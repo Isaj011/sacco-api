@@ -190,17 +190,39 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
 
   // If currentLocation is being updated, also add to VehicleLocationHistory
   if (req.body.currentLocation && req.body.currentLocation.latitude !== undefined && req.body.currentLocation.longitude !== undefined) {
-    await VehicleLocationHistory.create({
-      vehicleId: vehicle._id,
-      latitude: req.body.currentLocation.latitude,
-      longitude: req.body.currentLocation.longitude,
-      timestamp: new Date(),
-      // Optionally add speed, heading if available in req.body.currentLocation
-      speed: req.body.currentLocation.speed,
-      heading: req.body.currentLocation.heading
-    });
-    // Optionally update the updatedAt field
+    // Update the updatedAt field
     req.body.currentLocation.updatedAt = new Date();
+    
+    // If contextData is provided, include it in the update
+    if (req.body.contextData) {
+      // Validate contextData structure
+      if (req.body.contextData.weather) {
+        const validWeatherConditions = ['clear', 'sunny', 'cloudy', 'partly_cloudy', 'rainy', 'stormy'];
+        if (req.body.contextData.weather.condition && !validWeatherConditions.includes(req.body.contextData.weather.condition)) {
+          return next(
+            new ErrorResponse(`Invalid weather condition. Must be one of: ${validWeatherConditions.join(', ')}`, 400)
+          );
+        }
+      }
+      
+      if (req.body.contextData.traffic) {
+        const validTrafficLevels = ['light', 'moderate', 'heavy', 'normal'];
+        if (req.body.contextData.traffic.level && !validTrafficLevels.includes(req.body.contextData.traffic.level)) {
+          return next(
+            new ErrorResponse(`Invalid traffic level. Must be one of: ${validTrafficLevels.join(', ')}`, 400)
+          );
+        }
+      }
+      
+      if (req.body.contextData.source) {
+        const validSources = ['gps', 'manual', 'system'];
+        if (!validSources.includes(req.body.contextData.source)) {
+          return next(
+            new ErrorResponse(`Invalid source. Must be one of: ${validSources.join(', ')}`, 400)
+          );
+        }
+      }
+    }
   }
 
   vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
@@ -297,3 +319,62 @@ exports.vehiclePhotoUpload = asyncHandler(async (req, res, next) => {
     })
   })
 })
+
+// Manual vehicle location update for testing
+exports.manualUpdateVehicleLocation = asyncHandler(async (req, res, next) => {
+  const { vehicleId } = req.params;
+  const { latitude, longitude, speed } = req.body;
+
+  // Validate input
+  if (!latitude || !longitude) {
+    return next(new ErrorResponse('Latitude and longitude are required', 400));
+  }
+
+  // Find and update vehicle
+  const vehicle = await Vehicle.findByIdAndUpdate(
+    vehicleId,
+    {
+      currentLocation: {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        updatedAt: new Date()
+      },
+      currentSpeed: speed || 40,
+      averageSpeed: speed || 40
+    },
+    { new: true }
+  );
+
+  if (!vehicle) {
+    return next(new ErrorResponse(`Vehicle not found with id of ${vehicleId}`, 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: vehicle,
+    message: 'Vehicle location updated manually'
+  });
+});
+
+// Get vehicle location update status
+exports.getVehicleUpdateStatus = asyncHandler(async (req, res, next) => {
+  const vehicles = await Vehicle.find().select('plateNumber currentLocation currentSpeed contextData');
+  
+  const status = {
+    totalVehicles: vehicles.length,
+    lastUpdate: new Date(),
+    vehicles: vehicles.map(v => ({
+      id: v._id,
+      plateNumber: v.plateNumber,
+      location: v.currentLocation,
+      speed: v.currentSpeed,
+      hasRoute: !!v.contextData?.route?.routeId,
+      progress: v.contextData?.route?.progress
+    }))
+  };
+
+  res.status(200).json({
+    success: true,
+    data: status
+  });
+});

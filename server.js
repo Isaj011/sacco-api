@@ -38,6 +38,10 @@ const schedules = require('./routes/schedules')
 const fares = require('./routes/fares')
 const performances = require('./routes/performances')
 const drivers = require('./routes/driverRoutes')
+const backgroundJobs = require('./routes/backgroundJobs')
+const vehicleLocationHistory = require('./routes/vehicleLocationHistory')
+const analytics = require('./routes/analytics')
+const alerts = require('./routes/alerts')
 
 const app = express()
 
@@ -175,6 +179,10 @@ app.use('/api/v1/schedules', schedules)
 app.use('/api/v1/fares', fares)
 app.use('/api/v1/performances', performances)
 app.use('/api/v1/drivers', drivers)
+app.use('/api/v1/background-jobs', backgroundJobs)
+app.use('/api/v1/vehicle-location-history', vehicleLocationHistory)
+app.use('/api/v1/analytics', analytics)
+app.use('/api/v1/alerts', alerts)
 
 app.use(errorHandler)
 

@@ -172,14 +172,14 @@ const VehicleSchema = new mongoose.Schema({
       level: String,
       description: String
     },
-    
+
     // Performance metrics
     performance: {
       fuelEfficiency: Number,
       idleTime: Number,
       stopDuration: Number
     },
-    
+
     // Route information
     route: {
       routeId: {
@@ -191,14 +191,14 @@ const VehicleSchema = new mongoose.Schema({
         duration: Number
       }
     },
-    
+
     // Device health
     deviceHealth: {
       batteryLevel: Number,
       signalStrength: Number,
       accuracy: Number
     },
-    
+
     // Events and status
     events: [String],
     heading: Number,
@@ -210,13 +210,13 @@ const VehicleSchema = new mongoose.Schema({
   },
 
   // System Fields
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
+  createdAt: {
+    type: Date,
+    default: Date.now
   },
-  updatedAt: { 
-    type: Date, 
-    default: Date.now 
+  updatedAt: {
+    type: Date,
+    default: Date.now
   },
   user: {
     type: mongoose.Schema.ObjectId,
@@ -233,13 +233,13 @@ VehicleSchema.index({ status: 1 });
 VehicleSchema.index({ currentDriver: 1 });
 
 // Pre-save middleware to update the updatedAt field
-VehicleSchema.pre('save', function(next) {
+VehicleSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
 // Method to update vehicle status
-VehicleSchema.methods.updateStatus = async function(newStatus, reason, updatedBy) {
+VehicleSchema.methods.updateStatus = async function (newStatus, reason, updatedBy) {
   this.status = newStatus;
   this.statusHistory.push({
     status: newStatus,
@@ -250,7 +250,7 @@ VehicleSchema.methods.updateStatus = async function(newStatus, reason, updatedBy
 };
 
 // Populate middleware
-VehicleSchema.pre('find', function(next) {
+VehicleSchema.pre('find', function (next) {
   this.populate([
     { path: 'assignedRoute', select: 'routeName routeNumber' },
     { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
@@ -259,7 +259,7 @@ VehicleSchema.pre('find', function(next) {
   next();
 });
 
-VehicleSchema.pre('findOne', function(next) {
+VehicleSchema.pre('findOne', function (next) {
   this.populate([
     { path: 'assignedRoute', select: 'routeName routeNumber' },
     { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
@@ -269,7 +269,7 @@ VehicleSchema.pre('findOne', function(next) {
 });
 
 // Middleware to update Course's assignedVehicles array
-VehicleSchema.post('save', async function(next) {
+VehicleSchema.post('save', async function (next) {
   try {
     const Course = mongoose.model('Course');
     if (this.isModified('assignedRoute')) {
@@ -292,12 +292,12 @@ VehicleSchema.post('save', async function(next) {
 });
 
 // Middleware to automatically create VehicleLocationHistory entries
-VehicleSchema.post('save', async function() {
+VehicleSchema.post('save', async function () {
   try {
     // Only create history entry if location or context data was updated
     if (this.isModified('currentLocation') || this.isModified('contextData') || this.isModified('currentSpeed')) {
       const VehicleLocationHistory = mongoose.model('VehicleLocationHistory');
-      
+
       const historyData = {
         vehicleId: this._id,
         location: {
@@ -315,19 +315,19 @@ VehicleSchema.post('save', async function() {
           // Trigger information (will be populated by LocationTriggerService)
           triggerType: null,
           triggerId: null,
-          
+
           // Event information
           events: this.contextData?.events || [],
-          
+
           // Environmental conditions
           conditions: {
             weather: this.contextData?.weather,
             traffic: this.contextData?.traffic
           },
-          
+
           // Performance metrics
           performance: this.contextData?.performance,
-          
+
           // Route information
           route: {
             routeId: this.contextData?.route?.routeId || this.assignedRoute,
@@ -351,7 +351,7 @@ VehicleSchema.post('save', async function() {
 });
 
 // Store old assignedRoute before update
-VehicleSchema.pre('save', function(next) {
+VehicleSchema.pre('save', function (next) {
   if (this.isModified('assignedRoute')) {
     this._oldAssignedRoute = this.assignedRoute;
   }

@@ -55,6 +55,8 @@ const analytics = require('./routes/analytics')
 const alerts = require('./routes/alerts')
 const ntsa = require('./routes/ntsa')
 const ntsaDashboard = require('./routes/ntsaDashboard')
+const iot = require('./routes/iot')
+const passengerEvents = require('./routes/passengerEvents')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -199,6 +201,8 @@ app.use('/api/v1/analytics', analytics)
 app.use('/api/v1/alerts', alerts)
 app.use('/api/v1/ntsa', ntsa)
 app.use('/api/v1/ntsa', ntsaDashboard)
+app.use('/api/v1/iot', iot)
+app.use('/api/v1/events', passengerEvents)
 
 app.use(errorHandler)
 

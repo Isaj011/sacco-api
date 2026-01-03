@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
-    "seed": "node seeder.js -i",
+    "seed": "node seed/runSeeder.js",
+    "seed:old": "node seeder.js -i",
     "seed:triggers": "node seedLocationTriggers.js",
     "test:background": "node testBackgroundJob.js",
     "test:newdata": "node examples/newDataHandling.js"

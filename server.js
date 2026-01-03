@@ -1,19 +1,22 @@
-const path = require('path')
-const express = require('express')
-const dotenv = require('dotenv')
-const morgan = require('morgan')
-const colors = require('colors')
-const fileupload = require('express-fileupload')
-const cookieParser = require('cookie-parser')
-const errorHandler = require('./middleware/error')
-const connectDB = require('./config/db')
-const cors = require('cors')
-const mongoose = require('mongoose')
-const mongoSanitize = require('express-mongo-sanitize')
-const helmet = require('helmet')
-const xss = require('xss-clean')
-const rateLimit = require('express-rate-limit')
-const hpp = require('hpp')
+const path = require('path');
+const express = require('express');
+const dotenv = require('dotenv');
+const morgan = require('morgan');
+const colors = require('colors');
+const fileupload = require('express-fileupload');
+const cookieParser = require('cookie-parser');
+const errorHandler = require('./middleware/error');
+const connectDB = require('./config/db');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+const http = require('http');
+const setupWebSocket = require('./utils/websocket');
+const swaggerSetup = require('./swagger');
 
 //Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -27,6 +30,14 @@ console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET)
 
 //connect to database
 connectDB()
+
+// Create Express app and HTTP server
+const app = express();
+const server = http.createServer(app);
+
+// Initialize WebSocket
+const { broadcastToSchool } = setupWebSocket(server);
+app.set('broadcastToSchool', broadcastToSchool);
 
 //route files
 const vehicles = require('./routes/vehicles')
@@ -42,18 +53,23 @@ const backgroundJobs = require('./routes/backgroundJobs')
 const vehicleLocationHistory = require('./routes/vehicleLocationHistory')
 const analytics = require('./routes/analytics')
 const alerts = require('./routes/alerts')
+const ntsa = require('./routes/ntsa')
+const ntsaDashboard = require('./routes/ntsaDashboard')
+const iot = require('./routes/iot')
+const passengerEvents = require('./routes/passengerEvents')
 
-const app = express()
+// Mount Swagger
+swaggerSetup(app);
 
 // Enable CORS for all environments
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'development' 
+  origin: process.env.NODE_ENV === 'development'
     ? 'http://localhost:5173'  // During development, only allow localhost
     : [
-        'http://localhost:5173',
-        'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
-        'https://fare-rari.netlify.app'
-      ],
+      'http://localhost:5173',
+      'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
+      'https://fare-rari.netlify.app'
+    ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
@@ -122,12 +138,12 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.get('/debug', async (req, res) => {
   let mongoStatus = 'Not Connected';
   let mongoError = null;
-  
+
   try {
     // Check MongoDB connection
     const dbState = mongoose.connection.readyState;
     mongoStatus = dbState === 1 ? 'Connected' : 'Not Connected';
-    
+
     // Try to connect if not connected
     if (dbState !== 1) {
       console.log('Attempting to reconnect to MongoDB...');
@@ -183,18 +199,22 @@ app.use('/api/v1/background-jobs', backgroundJobs)
 app.use('/api/v1/vehicle-location-history', vehicleLocationHistory)
 app.use('/api/v1/analytics', analytics)
 app.use('/api/v1/alerts', alerts)
+app.use('/api/v1/ntsa', ntsa)
+app.use('/api/v1/ntsa', ntsaDashboard)
+app.use('/api/v1/iot', iot)
+app.use('/api/v1/events', passengerEvents)
 
 app.use(errorHandler)
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5000;
 
-const server = app.listen(
+// Start server
+server.listen(
   PORT,
   console.log(
-    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.rainbow
-      .bold.italic
+    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
   )
-)
+);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

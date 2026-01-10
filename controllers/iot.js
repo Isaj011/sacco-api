@@ -29,10 +29,13 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     // Handle standard IoT data with enhanced processing
     const { deviceId, location, sensorData, deviceStatus, vehicleStatus } = req.body;
 
-    // Validate device registration
-    const device = await IoT.findOne({ deviceId });
-    if (!device) {
-        return next(new ErrorResponse('Device not registered. Please register the device first.', 404));
+    // For development/testing, allow any device to send data
+    // No device registration required - just process the data
+
+    // Find associated vehicle if vehicleId is provided
+    let vehicle = null;
+    if (vehicleStatus && vehicleStatus.vehicleId) {
+        vehicle = await Vehicle.findById(vehicleStatus.vehicleId);
     }
 
     let eventsGenerated = [];
@@ -43,8 +46,8 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     let scheduleUpdates = {};
 
     // 1. Update vehicle location if provided
-    if (device.vehicleId && location) {
-        await updateVehicleLocation(device.vehicleId, location, deviceId);
+    if (vehicle && location) {
+        await updateVehicleLocation(vehicle._id, location, deviceId);
         locationUpdated = true;
     }
 
@@ -54,8 +57,8 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     }
 
     // 3. Update vehicle status if provided
-    if (device.vehicleId && vehicleStatus) {
-        await updateVehicleStatus(device.vehicleId, vehicleStatus, deviceId);
+    if (vehicle && vehicleStatus) {
+        await updateVehicleStatus(vehicle._id, vehicleStatus, deviceId);
         statusUpdated = true;
     }
 
@@ -65,7 +68,7 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     }
 
     // 5. Process route-related IoT data
-    if (device.vehicleId) {
+    if (vehicle) {
         routeUpdates = await processRouteIoTData(deviceId, {
             location,
             sensorData,
@@ -75,7 +78,7 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     }
 
     // 6. Process schedule-related IoT data
-    if (device.vehicleId) {
+    if (vehicle) {
         scheduleUpdates = await processScheduleIoTData(deviceId, {
             location,
             sensorData,
@@ -90,10 +93,11 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     // 8. Store IoT data with enhanced metadata
     const iotData = await IoT.create({
         deviceId,
+        deviceType: 'MULTI_SENSOR',
         location: location || {},
         sensorData: sensorData || {},
         deviceStatus: deviceStatus || {},
-        vehicleId: device.vehicleId,
+        vehicleId: vehicle ? vehicle._id : null,
         processedEvents: eventsGenerated.length,
         generatedAlerts: allAlerts.length,
         routeUpdates: Object.keys(routeUpdates).length,
@@ -104,7 +108,7 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
 
     // 9. Broadcast comprehensive real-time updates
     const io = req.app.get('io');
-    await broadcastIoTUpdate(device.vehicleId, {
+    await broadcastIoTUpdate(vehicle ? vehicle._id : null, {
         deviceId,
         location,
         sensorData,
@@ -130,7 +134,7 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
             routeUpdates: Object.keys(routeUpdates).length,
             scheduleUpdates: Object.keys(scheduleUpdates).length,
             alertsGenerated: allAlerts.length,
-            vehicleId: device.vehicleId,
+            vehicleId: vehicle ? vehicle._id : null,
             timestamp: new Date().toISOString(),
             systemsAffected: [
                 ...(locationUpdated ? ['Vehicle Location'] : []),
@@ -195,7 +199,13 @@ const handleAndroidSimulation = asyncHandler(async (req, res, next) => {
             // Update vehicle location if provided
             if (vehicleId && eventData.gps && eventData.gps.latitude && eventData.gps.longitude) {
                 try {
-                    const vehicle = await Vehicle.findById(vehicleId);
+                    // Try to find vehicle by plateNumber first, then by ObjectId
+                    let vehicle = await Vehicle.findOne({ plateNumber: vehicleId });
+                    if (!vehicle) {
+                        // Fallback: try to find by ObjectId (in case vehicleId is actually an ObjectId)
+                        vehicle = await Vehicle.findById(vehicleId);
+                    }
+
                     if (vehicle) {
                         vehicle.currentLocation = {
                             latitude: eventData.gps.latitude,

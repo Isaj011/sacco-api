@@ -162,7 +162,7 @@ exports.generateEventsFromSensorData = async (deviceId, sensorData, gps) => {
                         tripId,
                         vehicleId: device.vehicleId,
                         zoneId: standingArea.areaId,
-                        zoneType: 'STANDING',
+                        zoneType: 'STANDING_AREA',
                         timestamp: standingArea.timestamp || Date.now(),
                         gps: gps || await getCurrentGPS(device.vehicleId),
                         deviceId

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const IoT = require('./IoT');
 
 // Stop schema to hold information about each stop in a course
 const StopSchema = new mongoose.Schema({
@@ -36,6 +37,26 @@ const PerformanceSchema = new mongoose.Schema({
   onTimePercentage: Number,
   passengerSatisfaction: Number,
   totalTrips: Number,
+});
+
+// Alert thresholds schema for defining alert limits
+const AlertThresholdsSchema = new mongoose.Schema({
+  speedLimit: {
+    type: Number,
+    default: 120
+  },
+  fuelLevelThreshold: {
+    type: Number,
+    default: 15
+  },
+  batteryLevelThreshold: {
+    type: Number,
+    default: 20
+  },
+  temperatureThreshold: {
+    type: Number,
+    default: 80
+  }
 });
 
 // Main Course schema that references other sub-schemas
@@ -105,7 +126,7 @@ const CourseSchema = new mongoose.Schema({
     default: 0
   },
   performance: PerformanceSchema,
-  iotDevices: [IoTDeviceSchema],
+  iotDevices: [IoT.schema],
   alertThresholds: AlertThresholdsSchema,
   assignedVehicles: [{
     type: mongoose.Schema.ObjectId,
@@ -116,8 +137,7 @@ const CourseSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  schedule: ScheduleSchema,
-  performance: PerformanceSchema
+  schedule: ScheduleSchema
 }, {
   timestamps: true
 });

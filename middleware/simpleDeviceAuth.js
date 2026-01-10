@@ -241,6 +241,20 @@ exports.validateEventData = (req, res, next) => {
         }
     }
 
+    // Validate and transform zoneType
+    if (req.body.zoneType) {
+        const validZoneTypes = ['SEAT', 'STANDING_AREA', 'DOOR', 'AISLE', 'UNKNOWN'];
+
+        // Transform 'STANDING' to 'STANDING_AREA' for backward compatibility
+        if (req.body.zoneType === 'STANDING') {
+            req.body.zoneType = 'STANDING_AREA';
+        }
+
+        if (!validZoneTypes.includes(req.body.zoneType)) {
+            errors.push(`Invalid zoneType. Must be one of: ${validZoneTypes.join(', ')}`);
+        }
+    }
+
     if (errors.length > 0) {
         return res.status(400).json({
             success: false,
@@ -306,6 +320,20 @@ const validateBatchEventData = (req, res, next) => {
             }
             if (event.gps.longitude < -180 || event.gps.longitude > 180) {
                 errors.push(`Event ${index}: gps.longitude must be between -180 and 180`);
+            }
+        }
+
+        // Validate and transform zoneType for batch events
+        if (event.zoneType) {
+            const validZoneTypes = ['SEAT', 'STANDING_AREA', 'DOOR', 'AISLE', 'UNKNOWN'];
+
+            // Transform 'STANDING' to 'STANDING_AREA' for backward compatibility
+            if (event.zoneType === 'STANDING') {
+                event.zoneType = 'STANDING_AREA';
+            }
+
+            if (!validZoneTypes.includes(event.zoneType)) {
+                errors.push(`Event ${index}: Invalid zoneType "${event.zoneType}". Must be one of: ${validZoneTypes.join(', ')}`);
             }
         }
     });

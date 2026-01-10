@@ -5,7 +5,6 @@ const IoTSchema = new mongoose.Schema({
     deviceId: {
         type: String,
         required: [true, 'Device ID is required'],
-        unique: true,
         trim: true,
         maxlength: [50, 'Device ID cannot be more than 50 characters']
     },

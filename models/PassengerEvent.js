@@ -222,7 +222,7 @@ PassengerEventSchema.statics.getActiveTrips = async function (hours = 24) {
         {
             $addFields: {
                 hasTripEnd: {
-                    $any: true
+                    $eq: ['$lastEventType', 'TRIP_END']
                 }
             }
         },

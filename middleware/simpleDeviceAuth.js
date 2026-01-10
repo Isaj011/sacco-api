@@ -181,6 +181,12 @@ exports.getAllDevices = () => {
 
 // Helper function to validate event data (simple validation)
 exports.validateEventData = (req, res, next) => {
+    // Check if this is a batch request
+    if (req.body.events && Array.isArray(req.body.events)) {
+        return validateBatchEventData(req, res, next);
+    }
+
+    // Validate single event
     const { eventType, tripId, timestamp, gps } = req.body;
 
     // Basic validation
@@ -188,6 +194,24 @@ exports.validateEventData = (req, res, next) => {
 
     if (!eventType) {
         errors.push('eventType is required');
+    } else {
+        // Validate event type
+        const validEventTypes = [
+            'PASSENGER_SEATED',
+            'PASSENGER_STANDING',
+            'PASSENGER_STOOD_UP',
+            'PASSENGER_BOARDED',
+            'PASSENGER_ALIGHTED',
+            'TRIP_STARTED',
+            'TRIP_ENDED',
+            'STOP_REACHED',
+            'DOOR_OPENED',
+            'DOOR_CLOSED'
+        ];
+
+        if (!validEventTypes.includes(eventType)) {
+            errors.push(`Invalid eventType. Must be one of: ${validEventTypes.join(', ')}`);
+        }
     }
 
     if (!tripId) {
@@ -221,6 +245,75 @@ exports.validateEventData = (req, res, next) => {
         return res.status(400).json({
             success: false,
             error: 'Validation failed',
+            details: errors
+        });
+    }
+
+    next();
+};
+
+// Validate batch event data
+const validateBatchEventData = (req, res, next) => {
+    const { events, vehicleId, batchTimestamp } = req.body;
+    const errors = [];
+
+    if (!events || !Array.isArray(events) || events.length === 0) {
+        errors.push('Batch must contain at least one event');
+    }
+
+    const validEventTypes = [
+        'PASSENGER_SEATED',
+        'PASSENGER_STANDING',
+        'PASSENGER_STOOD_UP',
+        'PASSENGER_BOARDED',
+        'PASSENGER_ALIGHTED',
+        'TRIP_STARTED',
+        'TRIP_ENDED',
+        'STOP_REACHED',
+        'DOOR_OPENED',
+        'DOOR_CLOSED'
+    ];
+
+    // Validate each event in the batch
+    events.forEach((event, index) => {
+        if (!event.eventType) {
+            errors.push(`Event ${index}: eventType is required`);
+        } else if (!validEventTypes.includes(event.eventType)) {
+            errors.push(`Event ${index}: Invalid eventType "${event.eventType}"`);
+        }
+
+        if (!event.tripId) {
+            errors.push(`Event ${index}: tripId is required`);
+        }
+
+        if (!event.timestamp) {
+            errors.push(`Event ${index}: timestamp is required`);
+        } else if (typeof event.timestamp !== 'number' || event.timestamp <= 0) {
+            errors.push(`Event ${index}: timestamp must be a positive number`);
+        }
+
+        if (!event.gps) {
+            errors.push(`Event ${index}: gps is required`);
+        } else {
+            if (!event.gps.latitude || typeof event.gps.latitude !== 'number') {
+                errors.push(`Event ${index}: gps.latitude is required and must be a number`);
+            }
+            if (!event.gps.longitude || typeof event.gps.longitude !== 'number') {
+                errors.push(`Event ${index}: gps.longitude is required and must be a number`);
+            }
+            if (event.gps.latitude < -90 || event.gps.latitude > 90) {
+                errors.push(`Event ${index}: gps.latitude must be between -90 and 90`);
+            }
+            if (event.gps.longitude < -180 || event.gps.longitude > 180) {
+                errors.push(`Event ${index}: gps.longitude must be between -180 and 180`);
+            }
+        }
+    });
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            success: false,
+            error: 'Batch validation failed',
             details: errors
         });
     }

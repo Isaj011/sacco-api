@@ -3,89 +3,267 @@ const asyncHandler = require('../middleware/async');
 const IoT = require('../models/IoT');
 const Vehicle = require('../models/Vehicle');
 const VehicleLocationHistory = require('../models/VehicleLocationHistory');
+const {
+    updateVehicleLocation,
+    updateVehicleStatus,
+    generateEventsFromSensorData,
+    broadcastIoTUpdate,
+    processDeviceHealth
+} = require('../services/iotProcessingService');
+const {
+    processRouteIoTData
+} = require('../services/routeIoTService');
+const {
+    processScheduleIoTData
+} = require('../services/scheduleIoTService');
 
 // @desc    Receive IoT data from device
 // @route   POST /api/v1/iot/data
 // @access  Public (with device authentication)
 exports.receiveIoTData = asyncHandler(async (req, res, next) => {
-    const { deviceId, deviceType, vehicleId, location, sensorData, deviceStatus, rawData } = req.body;
-
-    // Validate required fields
-    if (!deviceId) {
-        return next(new ErrorResponse('Device ID is required', 400));
+    // Check if this is Android simulation data
+    if (req.body.events && Array.isArray(req.body.events) && req.body.source === 'android_simulation') {
+        return handleAndroidSimulation(req, res, next);
     }
 
-    // Check if device exists or create new one
-    let iotData = new IoT({
+    // Handle standard IoT data with enhanced processing
+    const { deviceId, location, sensorData, deviceStatus, vehicleStatus } = req.body;
+
+    // Validate device registration
+    const device = await IoT.findOne({ deviceId });
+    if (!device) {
+        return next(new ErrorResponse('Device not registered. Please register the device first.', 404));
+    }
+
+    let eventsGenerated = [];
+    let locationUpdated = false;
+    let statusUpdated = false;
+    let alerts = [];
+    let routeUpdates = {};
+    let scheduleUpdates = {};
+
+    // 1. Update vehicle location if provided
+    if (device.vehicleId && location) {
+        await updateVehicleLocation(device.vehicleId, location, deviceId);
+        locationUpdated = true;
+    }
+
+    // 2. Process sensor data and generate passenger events
+    if (sensorData) {
+        eventsGenerated = await generateEventsFromSensorData(deviceId, sensorData, location);
+    }
+
+    // 3. Update vehicle status if provided
+    if (device.vehicleId && vehicleStatus) {
+        await updateVehicleStatus(device.vehicleId, vehicleStatus, deviceId);
+        statusUpdated = true;
+    }
+
+    // 4. Process device health and generate alerts
+    if (deviceStatus) {
+        alerts = await processDeviceHealth(deviceId, deviceStatus);
+    }
+
+    // 5. Process route-related IoT data
+    if (device.vehicleId) {
+        routeUpdates = await processRouteIoTData(deviceId, {
+            location,
+            sensorData,
+            deviceStatus,
+            vehicleStatus
+        });
+    }
+
+    // 6. Process schedule-related IoT data
+    if (device.vehicleId) {
+        scheduleUpdates = await processScheduleIoTData(deviceId, {
+            location,
+            sensorData,
+            deviceStatus,
+            vehicleStatus
+        });
+    }
+
+    // 7. Combine all alerts
+    const allAlerts = [...alerts, ...(routeUpdates.alerts || [])];
+
+    // 8. Store IoT data with enhanced metadata
+    const iotData = await IoT.create({
         deviceId,
-        deviceType: deviceType || 'GPS_TRACKER',
-        vehicleId: vehicleId || null,
         location: location || {},
         sensorData: sensorData || {},
         deviceStatus: deviceStatus || {},
-        rawData: rawData || JSON.stringify(req.body),
-        dataSource: 'HTTP_POST'
+        vehicleId: device.vehicleId,
+        processedEvents: eventsGenerated.length,
+        generatedAlerts: allAlerts.length,
+        routeUpdates: Object.keys(routeUpdates).length,
+        scheduleUpdates: Object.keys(scheduleUpdates).length,
+        dataSource: 'HTTP_POST',
+        rawData: JSON.stringify(req.body)
     });
 
-    // If vehicleId is provided, update vehicle location and create location history
-    if (vehicleId && location && location.latitude && location.longitude) {
-        try {
-            const vehicle = await Vehicle.findById(vehicleId);
-            if (vehicle) {
-                // Update vehicle current location
-                vehicle.currentLocation = {
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                    updatedAt: new Date()
-                };
-                await vehicle.save();
+    // 9. Broadcast comprehensive real-time updates
+    const io = req.app.get('io');
+    await broadcastIoTUpdate(device.vehicleId, {
+        deviceId,
+        location,
+        sensorData,
+        eventsGenerated: eventsGenerated.length,
+        alerts: allAlerts,
+        routeUpdates,
+        scheduleUpdates,
+        timestamp: new Date()
+    }, io);
 
-                // Create location history entry
-                await VehicleLocationHistory.create({
-                    vehicleId: vehicleId,
-                    location: {
-                        latitude: location.latitude,
-                        longitude: location.longitude,
-                        altitude: location.altitude,
-                        accuracy: location.accuracy,
-                        speed: location.speed,
-                        heading: location.heading
-                    },
-                    timestamp: new Date(),
-                    dataSource: 'IOT_DEVICE',
-                    deviceId: deviceId,
-                    sensorData: sensorData || {},
-                    alerts: iotData.alerts || []
-                });
-            }
-        } catch (error) {
-            console.error('Error updating vehicle location:', error);
-            // Don't fail the IoT data submission if vehicle update fails
-        }
-    }
-
-    // Save IoT data
-    await iotData.save();
-
-    // Broadcast real-time data if WebSocket is available
-    if (req.app.get('broadcastToSchool') && vehicleId) {
-        try {
-            req.app.get('broadcastToSchool')(vehicleId, {
-                type: 'IOT_UPDATE',
-                deviceId,
-                location,
-                sensorData,
-                timestamp: iotData.timestamp
-            });
-        } catch (error) {
-            console.error('Error broadcasting IoT data:', error);
-        }
-    }
+    console.log(`📱 Comprehensive IoT Processing: Device ${deviceId}`);
+    console.log(`   Events: ${eventsGenerated.length} | Location: ${locationUpdated ? '✅' : '❌'} | Status: ${statusUpdated ? '✅' : '❌'}`);
+    console.log(`   Route Updates: ${Object.keys(routeUpdates).length} | Schedule Updates: ${Object.keys(scheduleUpdates).length} | Alerts: ${allAlerts.length}`);
 
     res.status(201).json({
         success: true,
-        data: iotData,
-        message: 'IoT data received successfully'
+        message: 'IoT data processed successfully across all systems',
+        data: {
+            deviceId,
+            eventsGenerated: eventsGenerated.length,
+            locationUpdated,
+            statusUpdated,
+            routeUpdates: Object.keys(routeUpdates).length,
+            scheduleUpdates: Object.keys(scheduleUpdates).length,
+            alertsGenerated: allAlerts.length,
+            vehicleId: device.vehicleId,
+            timestamp: new Date().toISOString(),
+            systemsAffected: [
+                ...(locationUpdated ? ['Vehicle Location'] : []),
+                ...(eventsGenerated.length > 0 ? ['Passenger Events'] : []),
+                ...(Object.keys(routeUpdates).length > 0 ? ['Route Management'] : []),
+                ...(Object.keys(scheduleUpdates).length > 0 ? ['Schedule Management'] : []),
+                ...(allAlerts.length > 0 ? ['Alert System'] : [])
+            ]
+        }
+    });
+});
+
+// Handle Android simulation data
+const handleAndroidSimulation = asyncHandler(async (req, res, next) => {
+    const { events, vehicleId, simulationTimestamp, source } = req.body;
+
+    // Validate simulation structure
+    if (!events || !Array.isArray(events) || events.length === 0) {
+        return next(new ErrorResponse('Simulation must contain at least one event', 400));
+    }
+
+    const processedEvents = [];
+    const errors = [];
+
+    // Process each simulation event
+    for (let i = 0; i < events.length; i++) {
+        const eventData = events[i];
+
+        try {
+            // Create IoT entry for simulation event
+            const iotData = new IoT({
+                deviceId: `android_sim_${vehicleId}`,
+                deviceType: 'MULTI_SENSOR',
+                vehicleId: vehicleId,
+                location: {
+                    latitude: eventData.gps?.latitude,
+                    longitude: eventData.gps?.longitude,
+                    altitude: eventData.gps?.altitude,
+                    accuracy: eventData.gps?.accuracy,
+                    speed: eventData.gps?.speed,
+                    heading: eventData.gps?.heading
+                },
+                sensorData: {
+                    eventType: eventData.eventType,
+                    tripId: eventData.tripId,
+                    zoneId: eventData.zoneId,
+                    zoneType: eventData.zoneType,
+                    passengerCount: eventData.passengerCount || 1,
+                    simulationData: true
+                },
+                deviceStatus: {
+                    isActive: true,
+                    batteryLevel: 100,
+                    signalStrength: 5,
+                    lastSeen: new Date()
+                },
+                rawData: JSON.stringify(eventData),
+                dataSource: 'ANDROID_SIMULATION',
+                timestamp: new Date(eventData.timestamp)
+            });
+
+            // Update vehicle location if provided
+            if (vehicleId && eventData.gps && eventData.gps.latitude && eventData.gps.longitude) {
+                try {
+                    const vehicle = await Vehicle.findById(vehicleId);
+                    if (vehicle) {
+                        vehicle.currentLocation = {
+                            latitude: eventData.gps.latitude,
+                            longitude: eventData.gps.longitude,
+                            updatedAt: new Date()
+                        };
+                        await vehicle.save();
+
+                        // Create location history entry
+                        await VehicleLocationHistory.create({
+                            vehicleId: vehicleId,
+                            location: {
+                                latitude: eventData.gps.latitude,
+                                longitude: eventData.gps.longitude,
+                                altitude: eventData.gps.altitude,
+                                accuracy: eventData.gps.accuracy,
+                                speed: eventData.gps.speed,
+                                heading: eventData.gps.heading
+                            },
+                            timestamp: new Date(eventData.timestamp),
+                            dataSource: 'ANDROID_SIMULATION',
+                            deviceId: `android_sim_${vehicleId}`,
+                            sensorData: iotData.sensorData,
+                            alerts: iotData.alerts || []
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error updating vehicle location:', error);
+                }
+            }
+
+            await iotData.save();
+            processedEvents.push({
+                id: iotData._id,
+                eventType: eventData.eventType,
+                tripId: eventData.tripId,
+                timestamp: eventData.timestamp
+            });
+
+        } catch (error) {
+            errors.push(`Event ${i}: ${error.message}`);
+        }
+    }
+
+    // Broadcast real-time simulation data if WebSocket is available
+    if (req.app.get('broadcastToSchool') && processedEvents.length > 0) {
+        try {
+            req.app.get('broadcastToSchool')(vehicleId, {
+                type: 'ANDROID_SIMULATION_BATCH',
+                simulationId: simulationTimestamp || Date.now(),
+                eventCount: processedEvents.length,
+                source: 'android_simulation',
+                timestamp: new Date()
+            });
+        } catch (error) {
+            console.error('Error broadcasting simulation data:', error);
+        }
+    }
+
+    console.log(`📱 Android Simulation: ${processedEvents.length} events processed, ${errors.length} errors`);
+
+    res.status(201).json({
+        success: true,
+        message: 'Android simulation data processed',
+        processedCount: processedEvents.length,
+        errorCount: errors.length,
+        errors: errors.length > 0 ? errors : undefined,
+        timestamp: new Date().toISOString()
     });
 });
 

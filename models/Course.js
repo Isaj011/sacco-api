@@ -92,14 +92,25 @@ const CourseSchema = new mongoose.Schema({
     longitude: Number,
     lastUpdated: String,
   },
+  averageDailyIncome: {
+    type: Number,
+    default: 0
+  },
+  totalIncome: {
+    type: Number,
+    default: 0
+  },
+  totalTrips: {
+    type: Number,
+    default: 0
+  },
+  performance: PerformanceSchema,
+  iotDevices: [IoTDeviceSchema],
+  alertThresholds: AlertThresholdsSchema,
   assignedVehicles: [{
     type: mongoose.Schema.ObjectId,
     ref: 'Vehicle'
   }],
-  totalPassengersFerried: {
-    type: Number,
-    default: 0,
-  },
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
@@ -112,7 +123,7 @@ const CourseSchema = new mongoose.Schema({
 });
 
 // Add a pre-save hook to calculate maxCapacity
-CourseSchema.pre('save', async function(next) {
+CourseSchema.pre('save', async function (next) {
   if (this.assignedVehicles && this.assignedVehicles.length > 0) {
     const vehicles = await this.model('Vehicle').find({ _id: { $in: this.assignedVehicles } });
     this.maxCapacity = vehicles.reduce((total, vehicle) => total + (vehicle.seatingCapacity || 0), 0);

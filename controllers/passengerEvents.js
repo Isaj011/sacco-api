@@ -7,6 +7,12 @@ const Vehicle = require('../models/Vehicle');
 // @route   POST /api/v1/events
 // @access  Public (with device authentication)
 exports.receiveEvent = asyncHandler(async (req, res, next) => {
+    // Check if this is a batch request
+    if (req.body.events && Array.isArray(req.body.events)) {
+        return handleBatchEvents(req, res, next);
+    }
+
+    // Handle single event (existing logic)
     const { eventType, tripId, zoneId, zoneType, timestamp, gps, passengerCount, routeId, driverId } = req.body;
 
     // Validate required fields
@@ -103,6 +109,117 @@ exports.receiveEvent = asyncHandler(async (req, res, next) => {
             deviceId: event.deviceId
         },
         message: 'Event received successfully'
+    });
+});
+
+// Handle batch events from Android devices
+const handleBatchEvents = asyncHandler(async (req, res, next) => {
+    const { events, vehicleId, batchTimestamp } = req.body;
+
+    // Validate batch structure
+    if (!events || !Array.isArray(events) || events.length === 0) {
+        return next(new ErrorResponse('Batch must contain at least one event', 400));
+    }
+
+    const processedEvents = [];
+    const errors = [];
+
+    // Process each event in the batch
+    for (let i = 0; i < events.length; i++) {
+        const eventData = events[i];
+
+        try {
+            // Validate required fields for each event
+            if (!eventData.eventType || !eventData.tripId || !eventData.timestamp || !eventData.gps) {
+                errors.push(`Event ${i}: Missing required fields`);
+                continue;
+            }
+
+            // Validate GPS coordinates
+            if (!eventData.gps.latitude || !eventData.gps.longitude) {
+                errors.push(`Event ${i}: Invalid GPS coordinates`);
+                continue;
+            }
+
+            // Create event with device info
+            const event = new PassengerEvent({
+                eventType: eventData.eventType,
+                tripId: eventData.tripId,
+                zoneId: eventData.zoneId || null,
+                zoneType: eventData.zoneType || 'UNKNOWN',
+                timestamp: eventData.timestamp,
+                gps: {
+                    latitude: eventData.gps.latitude,
+                    longitude: eventData.gps.longitude,
+                    accuracy: eventData.gps.accuracy || 10.0,
+                    altitude: eventData.gps.altitude || null,
+                    speed: eventData.gps.speed || null,
+                    heading: eventData.gps.heading || null
+                },
+                deviceId: req.device?.deviceId || null,
+                passengerCount: eventData.passengerCount || 1,
+                routeId: eventData.routeId || null,
+                driverId: eventData.driverId || null,
+                vehicleId: vehicleId || eventData.vehicleId || null,
+                rawData: JSON.stringify(eventData)
+            });
+
+            // Try to associate with vehicle if deviceId is provided
+            if (req.device?.deviceId) {
+                try {
+                    const vehicle = await Vehicle.findOne({
+                        $or: [
+                            { deviceId: req.device.deviceId },
+                            { plateNumber: req.device.deviceId }
+                        ]
+                    });
+
+                    if (vehicle) {
+                        event.vehicleId = vehicle._id;
+                    }
+                } catch (error) {
+                    console.error('Error finding vehicle:', error);
+                }
+            }
+
+            await event.save();
+            processedEvents.push({
+                id: event._id,
+                eventType: event.eventType,
+                tripId: event.tripId,
+                timestamp: event.timestamp
+            });
+
+        } catch (error) {
+            errors.push(`Event ${i}: ${error.message}`);
+        }
+    }
+
+    // Broadcast real-time events if WebSocket is available
+    if (req.app.get('broadcastToSchool') && processedEvents.length > 0) {
+        try {
+            processedEvents.forEach(event => {
+                req.app.get('broadcastToSchool')(event.vehicleId, {
+                    type: 'PASSENGER_EVENT_BATCH',
+                    batchId: batchTimestamp || Date.now(),
+                    eventCount: processedEvents.length,
+                    timestamp: new Date()
+                });
+            });
+        } catch (error) {
+            console.error('Error broadcasting batch events:', error);
+        }
+    }
+
+    console.log(`🚌 Batch Events: ${processedEvents.length} processed, ${errors.length} errors`);
+
+    res.status(201).json({
+        success: true,
+        message: 'Batch events processed',
+        processedCount: processedEvents.length,
+        errorCount: errors.length,
+        errors: errors.length > 0 ? errors : undefined,
+        timestamp: new Date().toISOString()
     });
 });
 

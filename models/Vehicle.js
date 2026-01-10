@@ -160,6 +160,87 @@ const VehicleSchema = new mongoose.Schema({
     default: 'no-photo.jpg',
   },
 
+  // Device integration fields
+  deviceId: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true
+  },
+  deviceType: {
+    type: String,
+    enum: ['GPS_TRACKER', 'MULTI_SENSOR', 'ANDROID_SIMULATION'],
+    required: false
+  },
+  deviceCapabilities: [{
+    type: String,
+    enum: ['GPS_TRACKING', 'PASSENGER_COUNTING', 'DOOR_SENSORS', 'FUEL_MONITORING', 'TEMPERATURE_SENSING']
+  }],
+  deviceConfiguration: {
+    updateInterval: Number,
+    gpsAccuracy: Number,
+    autoPassengerDetection: Boolean,
+    geofencing: {
+      enabled: Boolean,
+      radius: Number,
+      center: {
+        latitude: Number,
+        longitude: Number
+      }
+    }
+  },
+
+  // IoT-driven status
+  lastIoTUpdate: {
+    type: Date,
+    default: null
+  },
+  deviceStatus: {
+    online: {
+      type: Boolean,
+      default: false
+    },
+    batteryLevel: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    signalStrength: {
+      type: Number,
+      min: 0,
+      max: 5
+    },
+    lastSeen: Date
+  },
+
+  // Real-time metrics from IoT
+  currentMetrics: {
+    passengerCount: {
+      type: Number,
+      default: 0
+    },
+    seatedPassengers: {
+      type: Number,
+      default: 0
+    },
+    standingPassengers: {
+      type: Number,
+      default: 0
+    },
+    fuelLevel: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    engineTemperature: {
+      type: Number
+    },
+    speed: {
+      type: Number,
+      default: 0
+    }
+  },
+
   // Rich context data for Kenya Sacco operations
   contextData: {
     // Environmental conditions

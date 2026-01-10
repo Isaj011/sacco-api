@@ -57,6 +57,8 @@ const ntsa = require('./routes/ntsa')
 const ntsaDashboard = require('./routes/ntsaDashboard')
 const iot = require('./routes/iot')
 const passengerEvents = require('./routes/passengerEvents')
+const deviceRegistration = require('./routes/deviceRegistration')
+const iotSystem = require('./routes/iotSystem')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -200,9 +202,14 @@ app.use('/api/v1/vehicle-location-history', vehicleLocationHistory)
 app.use('/api/v1/analytics', analytics)
 app.use('/api/v1/alerts', alerts)
 app.use('/api/v1/ntsa', ntsa)
-app.use('/api/v1/ntsa', ntsaDashboard)
+app.use('/api/v1/ntsa-dashboard', ntsaDashboard)
 app.use('/api/v1/iot', iot)
 app.use('/api/v1/events', passengerEvents)
+app.use('/api/v1/devices', deviceRegistration)
+app.use('/api/v1/iot-system', iotSystem)
+
+// Set WebSocket instance for IoT broadcasting
+app.set('io', broadcastToSchool)
 
 app.use(errorHandler)
 

@@ -7,6 +7,7 @@ const PassengerEventSchema = new mongoose.Schema({
         required: [true, 'Event type is required'],
         enum: [
             'PASSENGER_SEATED',
+            'PASSENGER_STANDING',
             'PASSENGER_STOOD_UP',
             'PASSENGER_BOARDED',
             'PASSENGER_ALIGHTED',
@@ -221,7 +222,7 @@ PassengerEventSchema.statics.getActiveTrips = async function (hours = 24) {
         {
             $addFields: {
                 hasTripEnd: {
-                    $any: true
+                    $eq: ['$lastEventType', 'TRIP_END']
                 }
             }
         },

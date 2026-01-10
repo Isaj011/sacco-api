@@ -5,7 +5,6 @@ const IoTSchema = new mongoose.Schema({
     deviceId: {
         type: String,
         required: [true, 'Device ID is required'],
-        unique: true,
         trim: true,
         maxlength: [50, 'Device ID cannot be more than 50 characters']
     },
@@ -19,6 +18,31 @@ const IoTSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'Vehicle',
         required: false
+    },
+
+    // Device registration fields
+    deviceName: {
+        type: String,
+        required: false,
+        trim: true,
+        maxlength: [100, 'Device name cannot be more than 100 characters']
+    },
+    capabilities: [{
+        type: String,
+        enum: ['GPS_TRACKING', 'PASSENGER_COUNTING', 'DOOR_SENSORS', 'FUEL_MONITORING', 'TEMPERATURE_SENSING']
+    }],
+    configuration: {
+        updateInterval: Number,
+        gpsAccuracy: Number,
+        autoPassengerDetection: Boolean,
+        geofencing: {
+            enabled: Boolean,
+            radius: Number,
+            center: {
+                latitude: Number,
+                longitude: Number
+            }
+        }
     },
 
     // Location data (for GPS devices)
@@ -116,7 +140,21 @@ const IoTSchema = new mongoose.Schema({
         isActive: {
             type: Boolean,
             default: true
+        },
+        online: {
+            type: Boolean,
+            default: false
         }
+    },
+
+    // Enhanced processing fields
+    processedEvents: {
+        type: Number,
+        default: 0
+    },
+    generatedAlerts: {
+        type: Number,
+        default: 0
     },
 
     // Metadata

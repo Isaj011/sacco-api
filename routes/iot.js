@@ -7,34 +7,36 @@ const {
     getDeviceAlerts,
     updateDeviceConfig
 } = require('../controllers/iot');
+const { protect, authorize } = require('../middleware/auth');
+const { authenticateDevice, optionalDeviceAuth } = require('../middleware/simpleDeviceAuth');
 
 const router = express.Router();
 
 // Main IoT data ingestion endpoint
 router
     .route('/data')
-    .post(receiveIoTData);
+    .post(optionalDeviceAuth, receiveIoTData);
 
 // Device management
 router
     .route('/devices')
-    .get(getAllDevices);
+    .get(protect, getAllDevices);
 
 router
     .route('/device/:deviceId')
-    .get(getDeviceData);
+    .get(protect, getDeviceData);
 
 router
     .route('/device/:deviceId/config')
-    .put(updateDeviceConfig);
+    .put(protect, updateDeviceConfig);
 
 // Analytics and monitoring
 router
     .route('/analytics')
-    .get(getIoTAnalytics);
+    .get(protect, getIoTAnalytics);
 
 router
     .route('/alerts')
-    .get(getDeviceAlerts);
+    .get(protect, getDeviceAlerts);
 
 module.exports = router;

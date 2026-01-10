@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const IoT = require('./IoT');
 
 // Stop schema to hold information about each stop in a course
 const StopSchema = new mongoose.Schema({
@@ -36,6 +37,26 @@ const PerformanceSchema = new mongoose.Schema({
   onTimePercentage: Number,
   passengerSatisfaction: Number,
   totalTrips: Number,
+});
+
+// Alert thresholds schema for defining alert limits
+const AlertThresholdsSchema = new mongoose.Schema({
+  speedLimit: {
+    type: Number,
+    default: 120
+  },
+  fuelLevelThreshold: {
+    type: Number,
+    default: 15
+  },
+  batteryLevelThreshold: {
+    type: Number,
+    default: 20
+  },
+  temperatureThreshold: {
+    type: Number,
+    default: 80
+  }
 });
 
 // Main Course schema that references other sub-schemas
@@ -92,27 +113,37 @@ const CourseSchema = new mongoose.Schema({
     longitude: Number,
     lastUpdated: String,
   },
+  averageDailyIncome: {
+    type: Number,
+    default: 0
+  },
+  totalIncome: {
+    type: Number,
+    default: 0
+  },
+  totalTrips: {
+    type: Number,
+    default: 0
+  },
+  performance: PerformanceSchema,
+  iotDevices: [IoT.schema],
+  alertThresholds: AlertThresholdsSchema,
   assignedVehicles: [{
     type: mongoose.Schema.ObjectId,
     ref: 'Vehicle'
   }],
-  totalPassengersFerried: {
-    type: Number,
-    default: 0,
-  },
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
-  schedule: ScheduleSchema,
-  performance: PerformanceSchema
+  schedule: ScheduleSchema
 }, {
   timestamps: true
 });
 
 // Add a pre-save hook to calculate maxCapacity
-CourseSchema.pre('save', async function(next) {
+CourseSchema.pre('save', async function (next) {
   if (this.assignedVehicles && this.assignedVehicles.length > 0) {
     const vehicles = await this.model('Vehicle').find({ _id: { $in: this.assignedVehicles } });
     this.maxCapacity = vehicles.reduce((total, vehicle) => total + (vehicle.seatingCapacity || 0), 0);

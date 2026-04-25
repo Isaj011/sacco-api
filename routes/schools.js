@@ -36,8 +36,8 @@ const schoolValidationRules = [
 
 // Include other resource routers
 const studentRouter = require('./students');
-const vehicleRouter = require('./vehicles');
-const driverRouter = require('./driverRoutes');
+const vehicleRouter = require('./schoolVehicleRoutes');
+const driverRouter = require('./schoolDriverRoutes');
 const routeRouter = require('./routes');
 const parentRouter = require('./parents');
 const tripRouter = require('./schoolTrips');

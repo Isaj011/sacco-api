@@ -9,7 +9,9 @@
     "seed:old": "node seeder.js -i",
     "seed:triggers": "node seedLocationTriggers.js",
     "test:background": "node testBackgroundJob.js",
-    "test:newdata": "node examples/newDataHandling.js"
+    "test:newdata": "node examples/newDataHandling.js",
+    "seed:compliance": "node scripts/seedComplianceProfiles.js",
+    "seed:compliance:recalculate": "node scripts/seedComplianceProfiles.js --recalculate"
   },
   "author": "jaybantu",
   "license": "ISC",

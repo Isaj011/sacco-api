@@ -1,285 +1,414 @@
 const mongoose = require('mongoose')
 const colors = require('colors')
 const dotenv = require('dotenv')
-const fs = require('fs')
-const { createSampleTriggers, getTriggerStats } = require('./utils/sampleLocationTriggers');
-require('./models/LocationTrigger');
-require('./models/VehicleLocationHistory');
 
-// Load env vars
 dotenv.config({ path: './config/config.env' })
 
-// Load models
-const User = require('./models/User')
-const Driver = require('./models/Driver')
-const Vehicle = require('./models/Vehicle')
-const Course = require('./models/Course')
-const DriverAssignment = require('./models/DriverAssignment')
-const Stop = require('./models/Stop')
-const Schedule = require('./models/Schedule')
-const Fare = require('./models/Fare')
-const Performance = require('./models/Performance')
+// ── Models ────────────────────────────────────────────────────────────────────
+const User            = require('./models/User')
+const Driver          = require('./models/Driver')
+const Vehicle         = require('./models/Vehicle')
+const Course          = require('./models/Course')
+const DriverAssignment= require('./models/DriverAssignment')
+const Stop            = require('./models/Stop')
+const Schedule        = require('./models/Schedule')
+const Fare            = require('./models/Fare')
+const Performance     = require('./models/Performance')
+const School          = require('./models/School')
+const SchoolVehicle   = require('./models/SchoolVehicle')
+const SchoolDriver    = require('./models/SchoolDriver')
+const SchoolRoute     = require('./models/SchoolRoute')
+const SchoolStudent   = require('./models/SchoolStudent')
+const Parent          = require('./models/Parent')
+const Alert           = require('./models/Alert')
+const ComplianceProfile = require('./models/ComplianceProfile')
+const PlatformEvent   = require('./models/PlatformEvent')
+const SaccoTrip       = require('./models/SaccoTrip')
+const DailyAnalytics  = require('./models/DailyAnalytics')
+const complianceService = require('./services/complianceService')
+require('./models/LocationTrigger')
+require('./models/VehicleLocationHistory')
+const { createSampleTriggers } = require('./utils/sampleLocationTriggers')
 
-// Read JSON files
-const users = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/users.json`, 'utf-8')
-)
-const drivers = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/drivers.json`, 'utf-8')
-)
-const vehicles = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/vehicles.json`, 'utf-8')
-)
-const courses = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/courses.json`, 'utf-8')
-)
-const stops = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/stops.json`, 'utf-8')
-)
-const schedules = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/schedules.json`, 'utf-8')
-)
-const fares = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/fares.json`, 'utf-8')
-)
-const performances = JSON.parse(
-  fs.readFileSync(`${__dirname}/_data/performance.json`, 'utf-8')
-)
-
-// Connect to DB
+// ── DB connect ────────────────────────────────────────────────────────────────
 const connectDB = async () => {
+  const conn = await mongoose.connect(process.env.MONGO_URI)
+  console.log(`MongoDB: ${conn.connection.host}`.cyan.underline)
+}
+
+// ── Destroy ───────────────────────────────────────────────────────────────────
+const destroyData = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline.bold);
-  } catch (error) {
-    console.error(`Error: ${error.message}`.red.underline.bold);
-    process.exit(1);
+    await connectDB()
+    await Promise.all([
+      User.deleteMany(), Driver.deleteMany(), Vehicle.deleteMany(),
+      Course.deleteMany(), DriverAssignment.deleteMany(), Stop.deleteMany(),
+      Schedule.deleteMany(), Fare.deleteMany(), Performance.deleteMany(),
+      School.deleteMany(), SchoolVehicle.deleteMany(), SchoolDriver.deleteMany(),
+      SchoolRoute.deleteMany(), SchoolStudent.deleteMany(), Parent.deleteMany(),
+      Alert.deleteMany(), ComplianceProfile.deleteMany(),
+      PlatformEvent.deleteMany(), SaccoTrip.deleteMany(), DailyAnalytics.deleteMany()
+    ])
+    console.log('All collections cleared'.red.inverse)
+    process.exit(0)
+  } catch (err) {
+    console.error('Error destroying data:'.red, err.message)
+    process.exit(1)
   }
-};
+}
 
-// Import into DB
+// ── Import ────────────────────────────────────────────────────────────────────
 const importData = async () => {
   try {
-    await connectDB();
-    
-    // Clear existing data
-    await User.deleteMany()
-    await Driver.deleteMany()
-    await Vehicle.deleteMany()
-    await Course.deleteMany()
-    await DriverAssignment.deleteMany()
-    await Stop.deleteMany()
-    await Schedule.deleteMany()
-    await Fare.deleteMany()
-    await Performance.deleteMany()
+    await connectDB()
 
-    // Create users (admins/managers)
-    const createdUsers = await User.create(users)
-    console.log('Users created...'.green.inverse)
+    // ── 1. Users ──────────────────────────────────────────────────────────────
+    const rawUsers = [
+      { name: 'System Admin',     email: 'admin@sacco.com',        role: 'admin',          password: 'admin123' },
+      { name: 'James Kamau',      email: 'j.kamau@ntsa.go.ke',     role: 'ntsa_officer',   password: 'ntsa123' },
+      { name: 'Grace Wanjiru',    email: 'g.wanjiru@ntsa.go.ke',   role: 'ntsa_inspector', password: 'ntsa123' },
+      { name: 'Peter Ochieng',    email: 'p.ochieng@ntsa.go.ke',   role: 'ntsa_analyst',   password: 'ntsa123' },
+      { name: 'Staff NPS',        email: 'staff@nps.edu',          role: 'staff',          password: 'staff123' },
+      { name: 'Staff EA',         email: 'staff@ea.edu',           role: 'staff',          password: 'staff123' },
+      { name: 'Staff KIS',        email: 'staff@kis.edu',          role: 'staff',          password: 'staff123' },
+      { name: 'Staff RJS',        email: 'staff@rjs.edu',          role: 'staff',          password: 'staff123' },
+      { name: 'Staff DMP',        email: 'staff@dmp.edu',          role: 'staff',          password: 'staff123' },
+      { name: 'John Mwangi',      email: 'j.mwangi@driver.com',    role: 'driver',         password: 'driver123' },
+      { name: 'Samuel Otieno',    email: 's.otieno@driver.com',    role: 'driver',         password: 'driver123' },
+      { name: 'David Njoroge',    email: 'd.njoroge@driver.com',   role: 'driver',         password: 'driver123' },
+      { name: 'Patrick Kamande',  email: 'p.kamande@driver.com',   role: 'driver',         password: 'driver123' },
+      { name: 'Charles Muriithi', email: 'c.muriithi@driver.com',  role: 'driver',         password: 'driver123' },
+      { name: 'Joseph Kariuki',   email: 'j.kariuki@driver.com',   role: 'driver',         password: 'driver123' },
+      { name: 'Francis Wambua',   email: 'f.wambua@driver.com',    role: 'driver',         password: 'driver123' },
+      { name: 'Anthony Mutua',    email: 'a.mutua@driver.com',     role: 'driver',         password: 'driver123' },
+    ]
+    const users = await User.create(rawUsers)
+    console.log(`Users created: ${users.length}`.green.inverse)
 
-    // Create stops
-    const createdStops = await Stop.create(stops)
-    console.log('Stops created...'.green.inverse)
+    const adminUser   = users[0]
 
-    // Create schedules
-    const createdSchedules = await Schedule.create(schedules)
-    console.log('Schedules created...'.green.inverse)
+    // ── 2. Schools ────────────────────────────────────────────────────────────
+    const academicYear = { start: new Date('2025-01-06'), end: new Date('2025-11-28') }
+    const rawSchools = [
+      {
+        name: 'Nairobi Primary School', code: 'NPS', type: 'primary', ownership: 'public',
+        address: { street: 'Westlands Road', city: 'Nairobi', state: 'Nairobi County', postalCode: '00800', coordinates: { type: 'Point', coordinates: [36.8167, -1.2697] } },
+        contacts: [{ name: 'Jane Ngugi', email: 'info@nps.edu', phone: '0700123001', designation: 'Secretary' }],
+        principal: { name: 'Dr. Alice Mugo', email: 'principal@nps.edu', phone: '0700123000' },
+        academicYear, features: { hasTransport: true }, status: 'active'
+      },
+      {
+        name: 'Eastleigh Academy', code: 'EA', type: 'primary', ownership: 'private',
+        address: { street: 'Juja Road', city: 'Nairobi', state: 'Nairobi County', postalCode: '00610', coordinates: { type: 'Point', coordinates: [36.8631, -1.2700] } },
+        contacts: [{ name: 'Omar Hassan', email: 'info@ea.edu', phone: '0700123011', designation: 'Secretary' }],
+        principal: { name: 'Mr. Abdi Farah', email: 'principal@ea.edu', phone: '0700123010' },
+        academicYear, features: { hasTransport: true }, status: 'active'
+      },
+      {
+        name: 'Karen International School', code: 'KIS', type: 'international', ownership: 'international',
+        address: { street: 'Karen Road', city: 'Nairobi', state: 'Nairobi County', postalCode: '00502', coordinates: { type: 'Point', coordinates: [36.6827, -1.3196] } },
+        contacts: [{ name: 'Sarah Oloo', email: 'info@kis.edu', phone: '0700123021', designation: 'Registrar' }],
+        principal: { name: "Ms. Patricia Ndungu", email: 'principal@kis.edu', phone: '0700123020' },
+        academicYear, features: { hasTransport: true }, status: 'active'
+      },
+      {
+        name: 'Roysambu Junior School', code: 'RJS', type: 'primary', ownership: 'private',
+        address: { street: 'Thika Road', city: 'Nairobi', state: 'Nairobi County', postalCode: '00800', coordinates: { type: 'Point', coordinates: [36.8750, -1.2133] } },
+        contacts: [{ name: 'Lucy Achieng', email: 'info@rjs.edu', phone: '0700123031', designation: 'Secretary' }],
+        principal: { name: 'Mr. Joseph Ndichu', email: 'principal@rjs.edu', phone: '0700123030' },
+        academicYear, features: { hasTransport: true }, status: 'active'
+      },
+      {
+        name: 'Dagoretti Model Primary', code: 'DMP', type: 'primary', ownership: 'public',
+        address: { street: 'Ngong Road', city: 'Nairobi', state: 'Nairobi County', postalCode: '00100', coordinates: { type: 'Point', coordinates: [36.7390, -1.2921] } },
+        contacts: [{ name: 'Rose Wanjiku', email: 'info@dmp.edu', phone: '0700123041', designation: 'Secretary' }],
+        principal: { name: 'Mrs. Helen Muthoni', email: 'principal@dmp.edu', phone: '0700123040' },
+        academicYear, features: { hasTransport: true }, status: 'active'
+      }
+    ]
+    const schools = await School.create(rawSchools)
+    console.log(`Schools created: ${schools.length}`.green.inverse)
 
-    // Create fares
-    const createdFares = await Fare.create(fares)
-    console.log('Fares created...'.green.inverse)
+    // ── 3. Sacco Courses (Routes) ─────────────────────────────────────────────
+    const routeData = [
+      { routeName: 'CBD – Westlands (Route 46)',       routeNumber: '46',  desc: 'Kencom CBD to Westlands Stage',        dist: 6.2,  dur: '25 minutes' },
+      { routeName: 'CBD – Eastleigh (Route 10)',       routeNumber: '10',  desc: 'Kencom CBD to Eastleigh Stage 6',       dist: 5.8,  dur: '30 minutes' },
+      { routeName: 'CBD – Karen (Route 111)',           routeNumber: '111', desc: 'GPO CBD to Karen Shopping Centre',      dist: 18.5, dur: '50 minutes' },
+      { routeName: 'Thika Rd – Roysambu (Route 45)',   routeNumber: '45',  desc: 'TRM Stage to Roysambu Stage',           dist: 8.1,  dur: '35 minutes' },
+      { routeName: 'Ngong Rd – Dagoretti (Route 58)',  routeNumber: '58',  desc: 'Prestige Plaza to Dagoretti Corner',    dist: 9.4,  dur: '40 minutes' }
+    ]
+    const courses = await Course.create(routeData.map(r => ({
+      routeName:         r.routeName,
+      routeNumber:       r.routeNumber,
+      description:       r.desc,
+      totalDistance:     r.dist,
+      estimatedDuration: r.dur,
+      user:              adminUser._id,
+      stops:             [],
+      status:            'Active'
+    })))
+    console.log(`Courses created: ${courses.length}`.green.inverse)
 
-    // Create performance records
-    const createdPerformances = await Performance.create(performances)
-    console.log('Performance records created...'.green.inverse)
+    // ── 4. Sacco Drivers ──────────────────────────────────────────────────────
+    const licExpiry = new Date('2027-06-30')
+    const psvExpiry = new Date('2026-12-31')
+    const driverData = [
+      { driverName: 'John Mwangi',      nationalId: '12345001', lic: 'DL001NBI', psv: 'PSV001NBI', phone: '0712001001', email: 'j.mwangi@driver.com' },
+      { driverName: 'Samuel Otieno',    nationalId: '12345002', lic: 'DL002NBI', psv: 'PSV002NBI', phone: '0712001002', email: 's.otieno@driver.com' },
+      { driverName: 'David Njoroge',    nationalId: '12345003', lic: 'DL003NBI', psv: 'PSV003NBI', phone: '0712001003', email: 'd.njoroge@driver.com' },
+      { driverName: 'Patrick Kamande',  nationalId: '12345004', lic: 'DL004NBI', psv: 'PSV004NBI', phone: '0712001004', email: 'p.kamande@driver.com' },
+      { driverName: 'Charles Muriithi', nationalId: '12345005', lic: 'DL005NBI', psv: 'PSV005NBI', phone: '0712001005', email: 'c.muriithi@driver.com' },
+      { driverName: 'Joseph Kariuki',   nationalId: '12345006', lic: 'DL006NBI', psv: 'PSV006NBI', phone: '0712001006', email: 'j.kariuki@driver.com' },
+      { driverName: 'Francis Wambua',   nationalId: '12345007', lic: 'DL007NBI', psv: 'PSV007NBI', phone: '0712001007', email: 'f.wambua@driver.com' },
+      { driverName: 'Anthony Mutua',    nationalId: '12345008', lic: 'DL008NBI', psv: 'PSV008NBI', phone: '0712001008', email: 'a.mutua@driver.com' },
+    ]
+    const drivers = await Driver.create(driverData.map(d => ({
+      driverName:     d.driverName,
+      nationalId:     d.nationalId,
+      driverLicense:  { number: d.lic, expiryDate: licExpiry },
+      psvLicense:     { number: d.psv, expiryDate: psvExpiry },
+      contactDetails: { phone: d.phone, email: d.email },
+      status:         'active'
+    })))
+    console.log(`Sacco Drivers created: ${drivers.length}`.green.inverse)
 
-    // Create courses with references
-    const createdCourses = await Course.create(
-      courses.map((course, index) => {
-        // Get stops for this route based on stopId ranges
-        const routeStops = createdStops.filter(stop => {
-          const stopId = parseInt(stop.stopId.replace('STOP', ''))
-          if (index === 0) return stopId >= 1 && stopId <= 4    // Route 1: STOP001-STOP004
-          if (index === 1) return stopId >= 5 && stopId <= 7    // Route 2: STOP005-STOP007
-          return stopId >= 8 && stopId <= 10                   // Route 3: STOP008-STOP010
-        })
+    // ── 5. Sacco Vehicles ─────────────────────────────────────────────────────
+    const plates = ['KBZ 001A','KBZ 002B','KBZ 003C','KBZ 004D','KBZ 005E',
+                    'KCX 101F','KCX 102G','KCX 103H','KDA 201J','KDA 202K']
+    const saccoVehicles = await Vehicle.create(plates.map((plate, i) => ({
+      plateNumber:          plate,
+      vehicleModel:         i % 2 === 0 ? 'Toyota Hiace' : 'Nissan Matatu',
+      vehicleCondition:     'Good',
+      seatingCapacity:      14,
+      assignedRoute:        courses[i % courses.length]._id,
+      currentDriver:        drivers[i % drivers.length]._id,
+      averageSpeed:         45,
+      estimatedArrivalTime: '30 minutes',
+      status:               'available',
+      currentLocation:      { latitude: -1.2921, longitude: 36.8219 },
+      user:                 adminUser._id
+    })))
+    console.log(`Sacco Vehicles created: ${saccoVehicles.length}`.green.inverse)
 
-        // Sort stops by stopOrder to maintain route sequence
-        const sortedStops = routeStops.sort((a, b) => a.stopOrder - b.stopOrder)
-        const routeStopIds = sortedStops.map(stop => stop._id)
+    // ── 6. School Vehicles (3 per school = 15) ────────────────────────────────
+    const svPlates = [
+      'KAA 001S','KAA 002S','KAA 003S',
+      'KAB 001S','KAB 002S','KAB 003S',
+      'KAC 001S','KAC 002S','KAC 003S',
+      'KAD 001S','KAD 002S','KAD 003S',
+      'KAE 001S','KAE 002S','KAE 003S'
+    ]
+    const schoolVehicles = await SchoolVehicle.create(svPlates.map((plate, i) => ({
+      registrationNumber: plate,
+      school:      schools[Math.floor(i / 3)]._id,
+      make:        'Toyota',
+      model:       'Coaster',
+      year:        2020,
+      color:       'Yellow',
+      vehicleType: 'bus',
+      capacity:    { students: 30, seats: 30 },
+      fuelType:    'diesel',
+      transmission:'manual',
+      owner:       { type: 'school', name: schools[Math.floor(i / 3)].name },
+      safety:      { gpsEnabled: true, speedGovernor: true, speedLimit: 80, firstAidKit: true, fireExtinguisher: true, emergencyExit: true, seatBelts: true },
+      status:      'active'
+    })))
+    console.log(`School Vehicles created: ${schoolVehicles.length}`.green.inverse)
 
-        return {
-          ...course,
-          user: createdUsers[0]._id,
-          stops: routeStopIds,
-          schedule: createdSchedules[index % createdSchedules.length]._id,
-          fare: createdFares[index % createdFares.length]._id,
-          performance: createdPerformances[index % createdPerformances.length]._id
-        }
-      })
-    )
-    console.log('Courses created...'.green.inverse)
+    // ── 7. School Drivers (10) ────────────────────────────────────────────────
+    const sdFirstNames = ['Michael','Brian','George','Edwin','Victor','Newton','Dennis','Kelvin','Lawrence','Amos']
+    const sdLastNames  = ['Odhiambo','Kiplagat','Njoroge','Gitau','Wekesa','Ruto','Cheruiyot','Tanui','Kosgei','Bett']
+    const schoolCodes = schools.map(s => s.code)
+    const schoolDrivers = await SchoolDriver.create(sdFirstNames.map((fn, i) => {
+      const schoolIdx = i % schools.length
+      const nthForSchool = Math.floor(i / schools.length) + 1
+      return {
+        driverId:    `DRV-${schoolCodes[schoolIdx]}-25-${String(nthForSchool).padStart(4, '0')}`,
+        school:      schools[schoolIdx]._id,
+        firstName:   fn,
+        lastName:    sdLastNames[i],
+        dateOfBirth: new Date('1985-03-15'),
+        gender:      'male',
+        contact: {
+          phone: `07130${String(i + 1).padStart(5, '0')}`,
+          email: `${fn.toLowerCase()}.${sdLastNames[i].toLowerCase()}@school.com`
+        },
+        address: { street: 'Nairobi CBD', city: 'Nairobi', state: 'Nairobi County', postalCode: '00100', coordinates: { type: 'Point', coordinates: [36.8219, -1.2921] } },
+        license: {
+          number:    `SDL${String(i + 1).padStart(3, '0')}NBI`,
+          type:      'B',
+          issueDate: new Date('2020-01-15'),
+          expiryDate:new Date('2027-12-31')
+        },
+        status: 'active'
+      }
+    }))
+    console.log(`School Drivers created: ${schoolDrivers.length}`.green.inverse)
 
-    // Create drivers first
-    const createdDrivers = await Driver.create(
-      drivers.map(driver => ({
-        ...driver,
-        status: driver.status || 'registered'
-        // employeeId will be undefined by default
+    // ── 8. School Routes (2 per school = 10) ─────────────────────────────────
+    const srData = [
+      { name: 'Route A – Westlands to NPS',      school: 0, dist: 5.2, dur: 20, routeId: 'RT-NPS-25-0001' },
+      { name: 'Route B – Parklands to NPS',      school: 0, dist: 3.8, dur: 15, routeId: 'RT-NPS-25-0002' },
+      { name: 'Route C – Eastleigh North to EA', school: 1, dist: 4.1, dur: 18, routeId: 'RT-EA-25-0001'  },
+      { name: 'Route D – Eastleigh South to EA', school: 1, dist: 3.5, dur: 14, routeId: 'RT-EA-25-0002'  },
+      { name: 'Route E – Karen to KIS',          school: 2, dist: 7.2, dur: 30, routeId: 'RT-KIS-25-0001' },
+      { name: 'Route F – Langata to KIS',        school: 2, dist: 6.8, dur: 28, routeId: 'RT-KIS-25-0002' },
+      { name: 'Route G – Roysambu to RJS',       school: 3, dist: 4.5, dur: 22, routeId: 'RT-RJS-25-0001' },
+      { name: 'Route H – Githurai to RJS',       school: 3, dist: 8.1, dur: 35, routeId: 'RT-RJS-25-0002' },
+      { name: 'Route I – Dagoretti to DMP',      school: 4, dist: 3.9, dur: 16, routeId: 'RT-DMP-25-0001' },
+      { name: 'Route J – Kawangware to DMP',     school: 4, dist: 5.5, dur: 24, routeId: 'RT-DMP-25-0002' }
+    ]
+    const schoolRoutes = await SchoolRoute.create(srData.map(r => ({
+      routeId:     r.routeId,
+      name:        r.name,
+      school:      schools[r.school]._id,
+      description: `${r.name} school transport route`,
+      stops:       [],
+      status:      'active',
+      distance:    r.dist,
+      duration:    r.dur
+    })))
+    console.log(`School Routes created: ${schoolRoutes.length}`.green.inverse)
+
+    // ── 9. School Students (10 per school = 50) ───────────────────────────────
+    const sFirstNames = ['Amara','Binti','Ciku','Diana','Esther','Fatouma','Grace','Hana','Ivy','Jasmine',
+                         'Kevin','Liam','Moses','Noah','Oscar','Peter','Quinn','Ryan','Sam','Tom']
+    const lastNames   = ['Mwangi','Otieno','Kamau','Okonkwo','Njoroge','Hassan','Wanjiku','Abubakar','Mutua','Kariuki']
+    const students = await SchoolStudent.create(
+      Array.from({ length: 50 }, (_, i) => ({
+        studentId:       `${schools[Math.floor(i / 10)].code}25${String((i % 10) + 1).padStart(4, '0')}`,
+        admissionNumber: `ADM-${schools[Math.floor(i / 10)].code}-26-${String((i % 10) + 1).padStart(4, '0')}`,
+        school:          schools[Math.floor(i / 10)]._id,
+        firstName:    sFirstNames[i % sFirstNames.length],
+        lastName:     lastNames[i % lastNames.length],
+        dateOfBirth:  new Date('2015-06-01'),
+        gender:       i % 2 === 0 ? 'female' : 'male',
+        grade:        `Grade ${(i % 8) + 1}`,
+        academicYear: '2025',
+        address: {
+          street:     `${i + 1} School Lane`,
+          city:       'Nairobi',
+          state:      'Nairobi County',
+          postalCode: '00100',
+          coordinates: { type: 'Point', coordinates: [36.8219 + (i * 0.001), -1.2921 + (i * 0.001)] }
+        },
+        parents: [{
+          relation:   'guardian',
+          name:       `Guardian ${i + 1} ${lastNames[i % lastNames.length]}`,
+          phone:      `0720${String(i + 1).padStart(6, '0')}`,
+          isPrimary:  true,
+          canPickup:  true
+        }],
+        transportation: {
+          usesTransport: true,
+          routeId: schoolRoutes[Math.floor(i / 5) % schoolRoutes.length]._id,
+          pickupPoint: {
+            name: `Stop ${i + 1}`,
+            address: `${i + 1} School Lane, Nairobi`,
+            coordinates: { type: 'Point', coordinates: [36.8219 + (i * 0.001), -1.2921 - (i * 0.001)] }
+          },
+          dropPoint: {
+            name: 'School Gate',
+            address: `${schools[Math.floor(i / 10)].name}, Nairobi`,
+            coordinates: { type: 'Point', coordinates: [schools[Math.floor(i / 10)].address.coordinates.coordinates[0], schools[Math.floor(i / 10)].address.coordinates.coordinates[1]] }
+          }
+        },
+        status: 'active'
       }))
     )
-    console.log('Drivers created...'.green.inverse)
+    console.log(`School Students created: ${students.length}`.green.inverse)
 
-    // Create vehicles first
-    const createdVehicles = await Vehicle.create(
-      vehicles.map((vehicle, index) => {
-        const course = createdCourses[index % createdCourses.length];
-
-        return {
-          ...vehicle,
-          user: createdUsers[0]._id,
-          assignedRoute: course._id,
-          status: 'available'  // Set initial status to available
-        }
-      })
+    // ── 10. Parents (1 per student = 50) ─────────────────────────────────────
+    const parents = await Parent.create(
+      students.map((s, i) => ({
+        school:     s.school,
+        firstName:  `Guardian${i + 1}`,
+        lastName:   lastNames[i % lastNames.length],
+        phone:      `0722${String(i + 1).padStart(6, '0')}`,
+        email:      `parent${String(i + 1).padStart(3, '0')}@parent.com`,
+        address:    'Nairobi',
+        city:       'Nairobi',
+        state:      'Nairobi County',
+        postalCode: '00100',
+        children:   [{ student: s._id, relationship: 'guardian', isPrimary: true }]
+      }))
     )
-    console.log('Vehicles created...'.green.inverse)
+    console.log(`Parents created: ${parents.length}`.green.inverse)
 
-    // Create driver assignments with vehicle references
-    const assignments = await Promise.all(createdDrivers
-      .filter(driver => ['active', 'assigned'].includes(driver.status))
-      .map(async (driver, index) => {
-        const course = createdCourses[index % createdCourses.length];
-        const vehicle = createdVehicles[index % createdVehicles.length];
-        const year = new Date().getFullYear().toString().slice(-2);
-        const employeeId = `EMP-${year}-${(index + 1).toString().padStart(4, '0')}`;
+    // ── 11. Parent login accounts (50) ────────────────────────────────────────
+    await User.create(
+      students.map((s, i) => ({
+        name:     `Parent of ${s.firstName}`,
+        email:    `parent${String(i + 1).padStart(3, '0')}@parent.com`,
+        role:     'parent',
+        password: 'parent123'
+      }))
+    )
+    console.log(`Parent user accounts created: 50`.green.inverse)
 
-        // Ensure vehicle has route assigned
-        if (!vehicle.assignedRoute) {
-          await Vehicle.findByIdAndUpdate(vehicle._id, {
-            assignedRoute: course._id,
-            status: 'in_use'
-          });
-        }
+    // ── 12. Sample Alerts ─────────────────────────────────────────────────────
+    await Alert.create([
+      { type: 'speed_violation',     severity: 'high',     title: 'Speed Violation – KBZ 001A',      message: 'Vehicle recorded 95 km/h on Thika Road (limit: 80 km/h).',                                entityId: saccoVehicles[0]._id, entityType: 'vehicle', status: 'active',       metadata: { speed: 95, limit: 80 } },
+      { type: 'capacity_overflow',   severity: 'high',     title: 'Overloading – KBZ 002B',           message: 'Vehicle has 18 passengers (capacity: 14).',                                               entityId: saccoVehicles[1]._id, entityType: 'vehicle', status: 'active',       metadata: { count: 18, capacity: 14 } },
+      { type: 'insurance_expiry',    severity: 'critical', title: 'PSV Insurance Expiring',            message: 'PSV Insurance for KBZ 003C expires in 5 days.',                                           entityId: saccoVehicles[2]._id, entityType: 'vehicle', status: 'active' },
+      { type: 'license_expiry',      severity: 'high',     title: 'PSV Badge Expiring – John Mwangi', message: 'PSV Badge expires in 10 days.',                                                            entityId: drivers[0]._id,       entityType: 'driver',  status: 'active' },
+      { type: 'maintenance_due',     severity: 'medium',   title: 'NTSA Inspection Due – KBZ 004D',   message: 'Annual NTSA inspection is overdue by 15 days.',                                            entityId: saccoVehicles[3]._id, entityType: 'vehicle', status: 'active' },
+      { type: 'compliance_breach',   severity: 'critical', title: 'Operating Hours Violation',         message: 'School vehicle KAA 001S was operating at 19:30 EAT (allowed: 06:00–18:00).',              entityId: schoolVehicles[0]._id,entityType: 'vehicle', status: 'active' },
+      { type: 'revenue_target_missed',severity:'high',     title: 'Revenue Discrepancy – KBZ 005E',   message: 'Collected KES 1,400 vs reported KES 800. Variance: KES 600.',                              entityId: saccoVehicles[4]._id, entityType: 'vehicle', status: 'active' },
+      { type: 'route_deviation',     severity: 'medium',   title: 'Route Deviation – KCX 101F',        message: 'Vehicle deviated 2.3 km from assigned Route 46.',                                         entityId: saccoVehicles[5]._id, entityType: 'vehicle', status: 'acknowledged' },
+      { type: 'safety_incident',     severity: 'critical', title: 'Emergency – KAB 001S',              message: 'Panic button activated on school vehicle. Students on board.',                             entityId: schoolVehicles[3]._id,entityType: 'vehicle', status: 'active' },
+      { type: 'maintenance_due',     severity: 'medium',   title: 'Speed Limiter Silent – KCX 102G',  message: 'Speed limiter has not transmitted to NTSA IRSMS for 72 hours.',                            entityId: saccoVehicles[6]._id, entityType: 'vehicle', status: 'active' }
+    ])
+    console.log(`Alerts created: 10`.green.inverse)
 
-        return {
-          driverId: driver._id,
-          employeeId,
-          isActive: true,
-          salary: {
-            amount: 50000 + (index * 5000),
-            currency: 'KES',
-            paymentFrequency: 'monthly'
-          },
-          vehicleAssignment: {
-            busNumber: vehicle._id,
-            vehicleType: vehicle.vehicleModel,
-            routeAssigned: course._id,
-            assignmentDate: new Date(),
-            assignedBy: createdUsers[0]._id
-          }
-        };
-      }));
+    // ── 13. ComplianceProfiles ────────────────────────────────────────────────
+    let cpCount = 0
+    for (const v of saccoVehicles) {
+      await complianceService.createProfile('sacco', 'vehicle', v._id)
+      cpCount++
+    }
+    for (const d of drivers) {
+      await complianceService.createProfile('sacco', 'driver', d._id)
+      cpCount++
+    }
+    for (const sv of schoolVehicles) {
+      await complianceService.createProfile('school', 'vehicle', sv._id)
+      cpCount++
+    }
+    for (const sd of schoolDrivers) {
+      await complianceService.createProfile('school', 'driver', sd._id)
+      cpCount++
+    }
+    console.log(`ComplianceProfiles created: ${cpCount}`.green.inverse)
 
-    const createdAssignments = await DriverAssignment.create(assignments);
-    console.log('Driver assignments created...'.green.inverse);
-
-    // Update drivers with their employeeIds and status
-    for (const assignment of createdAssignments) {
-      await Driver.findByIdAndUpdate(assignment.driverId, {
-        employeeId: assignment.employeeId,
-        status: 'assigned'
-      });
+    // ── 14. Location Triggers ─────────────────────────────────────────────────
+    try {
+      const triggers = await createSampleTriggers(adminUser._id)
+      console.log(`Location Triggers created: ${triggers ? triggers.length : 0}`.green.inverse)
+    } catch (e) {
+      console.log(`Location Triggers: skipped (${e.message})`.yellow)
     }
 
-    // Update vehicles with driver assignment references
-    for (let i = 0; i < createdVehicles.length; i++) {
-      const assignment = createdAssignments[i % createdAssignments.length];
-      await Vehicle.findByIdAndUpdate(createdVehicles[i]._id, {
-        currentAssignment: assignment._id,
-        currentDriver: assignment.driverId,
-        status: 'in_use'
-      });
-    }
-
-    // Update courses with vehicle references
-    for (let i = 0; i < createdCourses.length; i++) {
-      const courseVehicles = createdVehicles.filter(
-        vehicle => vehicle.assignedRoute.toString() === createdCourses[i]._id.toString()
-      )
-      await Course.findByIdAndUpdate(createdCourses[i]._id, {
-        assignedVehicles: courseVehicles.map(vehicle => vehicle._id)
-      })
-    }
-    console.log('Course-vehicle relationships created...'.green.inverse)
-
-    // --- SEED LOCATION TRIGGERS ---
-    console.log('🌱 Seeding location triggers...'.yellow)
-    const adminUserId = createdUsers[0]._id;
-    const createdTriggers = await createSampleTriggers(adminUserId);
-    if (createdTriggers && createdTriggers.length > 0) {
-      console.log(`✅ Successfully created ${createdTriggers.length} location triggers`.green)
-    } else {
-      console.log('ℹ️ No new triggers created (they may already exist)'.blue)
-    }
-    // Show trigger stats
-    const stats = await getTriggerStats();
-    console.log('\n📊 Location Trigger Statistics:'.cyan)
-    console.log(`Total Triggers: ${stats.total}`.white)
-    console.log(`Active Triggers: ${stats.active}`.green)
-    console.log('\nBy Type:'.yellow)
-    stats.byType.forEach(type => {
-      console.log(`  ${type._id}: ${type.count} total, ${type.activeCount} active`.white)
-    })
-    console.log('\nBy Vehicle:'.yellow)
-    if (stats.byVehicle && stats.byVehicle.length > 0) {
-      stats.byVehicle.forEach(vehicle => {
-        console.log(`  ${vehicle._id}: ${vehicle.triggerCount} triggers, ${vehicle.activeTriggers} active`.white)
-      })
-    } else {
-      console.log('  No vehicle-specific triggers found'.gray)
-    }
-    // --- END SEED LOCATION TRIGGERS ---
-
-    console.log('All data imported successfully!'.green.inverse)
-    process.exit()
+    console.log('\n=== SEED COMPLETE ==='.cyan.bold)
+    console.log('Login credentials:'.yellow)
+    console.log('  admin@sacco.com / admin123'.white)
+    console.log('  j.kamau@ntsa.go.ke / ntsa123'.white)
+    console.log('  staff@nps.edu / staff123  (also ea, kis, rjs, dmp)'.white)
+    console.log('  j.mwangi@driver.com / driver123'.white)
+    console.log('  parent001@parent.com / parent123'.white)
+    process.exit(0)
   } catch (err) {
-    console.error('Error importing data:'.red.inverse, err)
+    console.error('Error importing data:'.red, err)
     process.exit(1)
   }
 }
 
-// Delete data
-const deleteData = async () => {
-  try {
-    await connectDB();
-    
-    await User.deleteMany()
-    await Driver.deleteMany()
-    await Vehicle.deleteMany()
-    await Course.deleteMany()
-    await DriverAssignment.deleteMany()
-    await Stop.deleteMany()
-    await Schedule.deleteMany()
-    await Fare.deleteMany()
-    await Performance.deleteMany()
-
-    console.log('All data destroyed!'.red.inverse)
-    process.exit()
-  } catch (err) {
-    console.error('Error destroying data:'.red.inverse, err)
-    process.exit(1)
-  }
-}
-
+// ── CLI ───────────────────────────────────────────────────────────────────────
 if (process.argv[2] === '-i') {
   importData()
 } else if (process.argv[2] === '-d') {
-  deleteData()
+  destroyData()
+} else {
+  console.log('Usage: node seeder.js -i (import) | -d (destroy)')
+  process.exit(1)
 }

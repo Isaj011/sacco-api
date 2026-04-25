@@ -1,10 +1,10 @@
 const express = require('express');
 const {
-    addStudentToSchool,
-    removeStudentFromSchool,
-    getSchoolStudents,
-    updateSchoolStudent,
-    getSchoolStudent
+    createStudent: addStudentToSchool,
+    deleteStudent: removeStudentFromSchool,
+    getStudents:   getSchoolStudents,
+    updateStudent: updateSchoolStudent,
+    getStudent:    getSchoolStudent
 } = require('../controllers/schoolStudentController');
 
 const router = express.Router({ mergeParams: true });

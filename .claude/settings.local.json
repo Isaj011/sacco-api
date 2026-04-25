@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(grep -l \"app.use\\\\|router.route\\\\|router.post\\\\|router.get\\\\|router.put\\\\|router.delete\" /c/Os/Dev/Farerare/sacco-api/routes/*.js)",
+      "Bash(node -e \"const m = require\\('mongoose'\\); console.log\\(m.version\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(ls seeder* routeSeeder* *.seed*)",
+      "Bash(ls utils/seeder*)",
+      "Bash(git -C \"C:\\\\Os\\\\Dev\\\\Farerare\\\\sacco-api\" log --oneline -10)",
+      "Bash(node *)",
+      "Bash(ls *)",
+      "Bash(echo \"Exit code: $?\")"
+    ]
+  }
+}

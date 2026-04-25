@@ -28,14 +28,12 @@ exports.register = asyncHandler(async (req, res, next) => {
       subject: 'Account Registration - Temporary Password',
       message,
     })
-
-    sendTokenResponse(user, 200, res, true)
   } catch (err) {
-    console.log(err)
-    return next(
-      new ErrorResponse('Could not send email. Registration failed.', 500)
-    )
+    // Email failure should not block registration — log and continue
+    console.log('Email send failed (non-fatal):', err.message)
   }
+
+  sendTokenResponse(user, 200, res, true)
 })
 
 // @desc      Login user

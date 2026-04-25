@@ -59,7 +59,6 @@ const AlertSchema = new mongoose.Schema({
   
   entityId: {
     type: mongoose.Schema.ObjectId,
-    refPath: 'entityType',
     required: [true, 'Entity ID is required']
   },
   
@@ -177,7 +176,6 @@ AlertSchema.statics.getAlertsByFilters = function(filters = {}) {
   }
   
   return this.find(query)
-    .populate('entityId', 'name plateNumber licenseNumber')
     .populate('acknowledgedBy', 'name email')
     .populate('resolvedBy', 'name email')
     .sort({ createdAt: -1 });

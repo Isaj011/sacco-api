@@ -59,6 +59,8 @@ const iot = require('./routes/iot')
 const passengerEvents = require('./routes/passengerEvents')
 const deviceRegistration = require('./routes/deviceRegistration')
 const iotSystem = require('./routes/iotSystem')
+const iotGateway = require('./routes/iotGateway')
+const monitoring = require('./routes/monitoring')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -207,6 +209,8 @@ app.use('/api/v1/iot', iot)
 app.use('/api/v1/events', passengerEvents)
 app.use('/api/v1/devices', deviceRegistration)
 app.use('/api/v1/iot-system', iotSystem)
+app.use('/api/v1/gateway', iotGateway)
+app.use('/api/v1/monitoring', monitoring)
 
 // Set WebSocket instance for IoT broadcasting
 app.set('io', broadcastToSchool)

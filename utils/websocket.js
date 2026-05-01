@@ -2,36 +2,68 @@ const WebSocket = require('ws');
 
 const setupWebSocket = (server) => {
     const wss = new WebSocket.Server({ server, path: '/ws' });
-    const clients = new Map();
+    const channels = {
+        schools: new Map(),
+        fleet: new Set()
+    };
 
     wss.on('connection', (ws, req) => {
-        const schoolId = req.url.split('?schoolId=')[1];
-
-        if (schoolId) {
-            if (!clients.has(schoolId)) {
-                clients.set(schoolId, new Set());
+        // Parse URL params safely
+        let schoolId = null;
+        let type = null;
+        
+        try {
+            const urlParts = req.url.split('?');
+            if (urlParts.length > 1) {
+                const params = new URLSearchParams(urlParts[1]);
+                schoolId = params.get('schoolId');
+                type = params.get('type');
+            } else {
+                // Fallback for older schoolId connection style
+                schoolId = req.url.split('?schoolId=')[1];
             }
-            clients.get(schoolId).add(ws);
+        } catch (e) {
+            console.error('WebSocket URL parse error:', e);
         }
 
-        ws.on('close', () => {
-            if (schoolId && clients.has(schoolId)) {
-                clients.get(schoolId).delete(ws);
-                if (clients.get(schoolId).size === 0) {
-                    clients.delete(schoolId);
-                }
+        if (schoolId) {
+            if (!channels.schools.has(schoolId)) {
+                channels.schools.set(schoolId, new Set());
             }
-        });
+            channels.schools.get(schoolId).add(ws);
+            
+            ws.on('close', () => {
+                if (channels.schools.has(schoolId)) {
+                    channels.schools.get(schoolId).delete(ws);
+                    if (channels.schools.get(schoolId).size === 0) {
+                        channels.schools.delete(schoolId);
+                    }
+                }
+            });
+        } else if (type === 'fleet') {
+            channels.fleet.add(ws);
+            ws.on('close', () => {
+                channels.fleet.delete(ws);
+            });
+        }
     });
 
     return {
         broadcastToSchool: (schoolId, data) => {
-            if (clients.has(schoolId)) {
+            if (channels.schools.has(schoolId)) {
                 const message = JSON.stringify(data);
-                for (const client of clients.get(schoolId)) {
+                for (const client of channels.schools.get(schoolId)) {
                     if (client.readyState === WebSocket.OPEN) {
                         client.send(message);
                     }
+                }
+            }
+        },
+        broadcastToFleet: (data) => {
+            const message = JSON.stringify(data);
+            for (const client of channels.fleet) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message);
                 }
             }
         }

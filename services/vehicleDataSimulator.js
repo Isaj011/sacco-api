@@ -2,6 +2,7 @@ const Vehicle = require('../models/Vehicle');
 const LocationTrigger = require('../models/LocationTrigger');
 const LocationTriggerService = require('./locationTriggerService');
 const Course = require('../models/Course');
+const eventBus = require('../utils/eventBus');
 
 class VehicleDataSimulator {
   constructor() {
@@ -553,6 +554,21 @@ class VehicleDataSimulator {
       };
 
       await Vehicle.findByIdAndUpdate(vehicleId, updateData);
+
+      // Emit real-time WebSocket update for the frontend map
+      eventBus.emit('vehicle_updated', {
+        vehicleId,
+        plateNumber: vehicle.plateNumber,
+        vehicleModel: vehicle.vehicleModel,
+        assignedRoute: vehicle.assignedRoute ? {
+            _id: vehicle.assignedRoute._id,
+            routeName: vehicle.assignedRoute.routeName
+        } : null,
+        location: updateData.currentLocation,
+        speed: updateData.currentSpeed,
+        heading: updateData.contextData.heading,
+        status: vehicle.status
+      });
 
     } catch (error) {
       console.error('Error updating vehicle with full context:', error);

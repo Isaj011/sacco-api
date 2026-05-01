@@ -25,8 +25,13 @@ const mongoose         = require('mongoose');
 const complianceService = require('../services/complianceService');
 
 // ── Models ────────────────────────────────────────────────────────────────────
-const Vehicle      = require('../models/Vehicle');
-const Driver       = require('../models/Driver');
+// Register all models Vehicle's auto-populate hooks reference
+require('../models/IoT');
+require('../models/Course');
+require('../models/DriverAssignment');
+require('../models/User');
+const Vehicle       = require('../models/Vehicle');
+const Driver        = require('../models/Driver');
 const SchoolVehicle = require('../models/SchoolVehicle');
 const SchoolDriver  = require('../models/SchoolDriver');
 

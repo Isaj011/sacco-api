@@ -36,8 +36,19 @@ const app = express();
 const server = http.createServer(app);
 
 // Initialize WebSocket
-const { broadcastToSchool } = setupWebSocket(server);
+const { broadcastToSchool, broadcastToFleet } = setupWebSocket(server);
 app.set('broadcastToSchool', broadcastToSchool);
+app.set('broadcastToFleet', broadcastToFleet);
+
+// Set up global event bus for WebSocket broadcasting
+const eventBus = require('./utils/eventBus');
+eventBus.on('vehicle_updated', (vehicleData) => {
+    broadcastToFleet({ type: 'VEHICLE_UPDATE', data: vehicleData });
+});
+
+eventBus.on('alert_created', (alert) => {
+    broadcastToFleet({ type: 'ALERT_CREATED', data: alert });
+});
 
 //route files
 const vehicles = require('./routes/vehicles')
@@ -53,6 +64,7 @@ const backgroundJobs = require('./routes/backgroundJobs')
 const vehicleLocationHistory = require('./routes/vehicleLocationHistory')
 const analytics = require('./routes/analytics')
 const alerts = require('./routes/alerts')
+const incidents = require('./routes/incidents')
 const ntsa = require('./routes/ntsa')
 const ntsaDashboard = require('./routes/ntsaDashboard')
 const iot = require('./routes/iot')
@@ -61,6 +73,14 @@ const deviceRegistration = require('./routes/deviceRegistration')
 const iotSystem = require('./routes/iotSystem')
 const iotGateway = require('./routes/iotGateway')
 const monitoring = require('./routes/monitoring')
+const delivery   = require('./routes/delivery')
+const schools = require('./routes/schools')
+const parents = require('./routes/parents')
+const students = require('./routes/students')
+const schoolDrivers = require('./routes/schoolDriverRoutes')
+const schoolVehicles = require('./routes/schoolVehicleRoutes')
+const schoolTrips = require('./routes/schoolTrips')
+const schoolNotifications = require('./routes/schoolNotifications')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -203,6 +223,7 @@ app.use('/api/v1/background-jobs', backgroundJobs)
 app.use('/api/v1/vehicle-location-history', vehicleLocationHistory)
 app.use('/api/v1/analytics', analytics)
 app.use('/api/v1/alerts', alerts)
+app.use('/api/v1/incidents', incidents)
 app.use('/api/v1/ntsa', ntsa)
 app.use('/api/v1/ntsa-dashboard', ntsaDashboard)
 app.use('/api/v1/iot', iot)
@@ -211,6 +232,14 @@ app.use('/api/v1/devices', deviceRegistration)
 app.use('/api/v1/iot-system', iotSystem)
 app.use('/api/v1/gateway', iotGateway)
 app.use('/api/v1/monitoring', monitoring)
+app.use('/api/v1/delivery', delivery)
+app.use('/api/v1/schools', schools)
+app.use('/api/v1/parents', parents)
+app.use('/api/v1/students', students)
+app.use('/api/v1/school-drivers', schoolDrivers)
+app.use('/api/v1/school-vehicles', schoolVehicles)
+app.use('/api/v1/school-trips', schoolTrips)
+app.use('/api/v1/school-notifications', schoolNotifications)
 
 // Set WebSocket instance for IoT broadcasting
 app.set('io', broadcastToSchool)

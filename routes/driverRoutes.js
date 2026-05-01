@@ -6,161 +6,60 @@ const driverController = require('../controllers/driverController');
 const driverAssignmentController = require('../controllers/driverAssignmentController');
 const { protect, authorize } = require('../middleware/auth');
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
+  destination: function (req, file, cb) { cb(null, 'uploads/') },
+  filename:    function (req, file, cb) { cb(null, `${Date.now()}-${file.originalname}`) }
 });
 
 const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  },
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
-    const filetypes = /jpeg|jpg|png|pdf/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('Only .png, .jpg, .jpeg and .pdf files are allowed!'));
+    const ok = /jpeg|jpg|png|pdf/.test(file.mimetype) &&
+               /jpeg|jpg|png|pdf/.test(path.extname(file.originalname).toLowerCase());
+    ok ? cb(null, true) : cb(new Error('Only .png, .jpg, .jpeg and .pdf files are allowed!'));
   }
 });
 
-// Get all driver assignments - Moved to top to prevent route parameter conflict
-router.get('/assignments', 
-  protect, 
-  authorize('admin', 'manager'), 
-  driverAssignmentController.getAllAssignments
-);
+// Read roles — admin + all staff/regulatory roles
+const READERS = ['admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'];
+// Write roles — admin only (no phantom 'manager'/'supervisor' roles)
+const WRITERS = ['admin'];
+// Self-service — driver can submit their own requests
+const SELF    = ['admin', 'driver'];
 
-// Driver Profile Routes
-router.post('/register', 
-  protect, 
-  authorize('admin', 'manager'),
-  upload.single('photo'),
-  driverController.registerDriver
-);
+// Assignments list — before /:id to avoid conflict
+router.get('/assignments', protect, authorize(...READERS), driverAssignmentController.getAllAssignments);
 
-router.get('/', 
-  protect, 
-  authorize('admin', 'manager', 'supervisor'),
-  driverController.getAllDrivers
-);
+// Driver Profile
+router.post('/register', protect, authorize(...WRITERS), upload.single('photo'), driverController.registerDriver);
+router.get('/',          protect, authorize(...READERS), driverController.getAllDrivers);
+router.get('/:id',       protect, authorize(...READERS), driverController.getDriverById);
+router.put('/:id',       protect, authorize(...WRITERS), upload.single('photo'), driverController.updateDriver);
+router.delete('/:id',    protect, authorize(...WRITERS), driverController.deleteDriver);
 
-router.get('/:id', 
-  protect, 
-  authorize('admin', 'manager', 'supervisor'),
-  driverController.getDriverById
-);
+// Documents
+router.post('/:id/documents',                          protect, authorize(...WRITERS), upload.single('document'), driverController.uploadDocuments);
+router.get('/:id/documents',                           protect, authorize(...READERS), driverController.getDocuments);
+router.delete('/:id/documents/:documentType/:documentId', protect, authorize(...WRITERS), driverController.deleteDocument);
 
-router.put('/:id', 
-  protect, 
-  authorize('admin', 'manager'),
-  upload.single('photo'),
-  driverController.updateDriver
-);
+// Assignment
+router.post('/:id/assign', protect, authorize(...WRITERS), driverAssignmentController.createAssignment);
+router.put('/:id/assign',  protect, authorize(...WRITERS), driverAssignmentController.updateAssignment);
+router.get('/:id/assign',  protect, authorize(...READERS), driverAssignmentController.getAssignment);
 
-router.delete('/:id', 
-  protect, 
-  authorize('admin'),
-  driverController.deleteDriver
-);
+// Leave
+router.post('/:id/leaves',           protect, authorize(...SELF),    driverAssignmentController.createLeaveRequest);
+router.put('/:id/leaves/:leaveId',   protect, authorize(...WRITERS), driverAssignmentController.updateLeaveStatus);
+router.get('/:id/leaves',            protect, authorize(...READERS), driverAssignmentController.getLeaveHistory);
 
-// Document Management Routes
-router.post('/:id/documents',
-  protect,
-  authorize('admin', 'manager'),
-  upload.single('document'),
-  driverController.uploadDocuments
-);
+// Disciplinary
+router.post('/:id/disciplinary', protect, authorize(...WRITERS), driverAssignmentController.addDisciplinaryRecord);
+router.get('/:id/disciplinary',  protect, authorize(...READERS), driverAssignmentController.getDisciplinaryRecords);
 
-router.get('/:id/documents',
-  protect,
-  authorize('admin', 'manager', 'supervisor'),
-  driverController.getDocuments
-);
+// Grievances
+router.post('/:id/grievances',                protect, authorize(...SELF),    driverAssignmentController.createGrievance);
+router.put('/:id/grievances/:grievanceId',    protect, authorize(...WRITERS), driverAssignmentController.updateGrievanceStatus);
+router.get('/:id/grievances',                 protect, authorize(...READERS), driverAssignmentController.getGrievanceHistory);
 
-router.delete('/:id/documents/:documentType/:documentId',
-  protect,
-  authorize('admin', 'manager'),
-  driverController.deleteDocument
-);
-
-// Assignment Routes
-router.post('/:id/assign',
-  protect,
-  authorize('admin', 'manager'),
-  driverAssignmentController.createAssignment
-);
-
-router.put('/:id/assign',
-  protect,
-  authorize('admin', 'manager'),
-  driverAssignmentController.updateAssignment
-);
-
-router.get('/:id/assign',
-  protect,
-  authorize('admin', 'manager', 'supervisor'),
-  driverAssignmentController.getAssignment
-);
-
-// Leave Management Routes
-router.post('/:id/leaves',
-  protect,
-  authorize('admin', 'manager', 'driver'),
-  driverAssignmentController.createLeaveRequest
-);
-
-router.put('/:id/leaves/:leaveId',
-  protect,
-  authorize('admin', 'manager'),
-  driverAssignmentController.updateLeaveStatus
-);
-
-router.get('/:id/leaves',
-  protect,
-  authorize('admin', 'manager', 'supervisor'),
-  driverAssignmentController.getLeaveHistory
-);
-
-// Disciplinary Records Routes
-router.post('/:id/disciplinary',
-  protect,
-  authorize('admin', 'manager'),
-  driverAssignmentController.addDisciplinaryRecord
-);
-
-router.get('/:id/disciplinary',
-  protect,
-  authorize('admin', 'manager', 'supervisor'),
-  driverAssignmentController.getDisciplinaryRecords
-);
-
-// Grievance Management Routes
-router.post('/:id/grievances',
-  protect,
-  authorize('admin', 'manager', 'driver'),
-  driverAssignmentController.createGrievance
-);
-
-router.put('/:id/grievances/:grievanceId',
-  protect,
-  authorize('admin', 'manager'),
-  driverAssignmentController.updateGrievanceStatus
-);
-
-router.get('/:id/grievances',
-  protect,
-  authorize('admin', 'manager', 'supervisor'),
-  driverAssignmentController.getGrievanceHistory
-);
-
-module.exports = router; 
+module.exports = router;

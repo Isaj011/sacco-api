@@ -5,6 +5,7 @@ const Schedule = require('../models/Schedule');
 const Incident = require('../models/Incident');
 const PassengerFeedback = require('../models/PassengerFeedback');
 const Alert = require('../models/Alert');
+const eventBus = require('../utils/eventBus');
 
 class AlertService {
   constructor() {
@@ -369,6 +370,10 @@ class AlertService {
 
       const alert = new Alert(alertData);
       await alert.save();
+      
+      // Emit event for real-time notification
+      eventBus.emit('alert_created', alert);
+      
       return alert;
     } catch (error) {
       console.error('Error creating alert:', error);

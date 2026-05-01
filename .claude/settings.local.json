@@ -10,7 +10,9 @@
       "Bash(git -C \"C:\\\\Os\\\\Dev\\\\Farerare\\\\sacco-api\" log --oneline -10)",
       "Bash(node *)",
       "Bash(ls *)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(xargs -I {} basename {})",
+      "Bash(xargs grep *)"
     ]
   }
 }

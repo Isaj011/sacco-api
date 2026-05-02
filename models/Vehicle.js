@@ -304,6 +304,11 @@ const VehicleSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  saccoOperator: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SaccoOperator',
+    default: null,
+  },
 }, {
   timestamps: true
 });

@@ -137,7 +137,12 @@ const RouteSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  schedule: ScheduleSchema
+  schedule: ScheduleSchema,
+  saccoOperator: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SaccoOperator',
+    default: null,
+  },
 }, {
   timestamps: true
 });

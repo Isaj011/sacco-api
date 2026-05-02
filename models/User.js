@@ -38,6 +38,11 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  saccoOperator: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SaccoOperator',
+    default: null,
+  },
 })
 
 //encrypt password using bcrypt

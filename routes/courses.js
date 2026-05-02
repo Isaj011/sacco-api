@@ -11,10 +11,10 @@ const router = express.Router();
 
 const { protect, authorize } = require('../middleware/auth');
 const advancedResults = require('../middleware/advancedResults');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 
 // Apply advanced results middleware to GET all courses
-router.get('/', advancedResults(Course, [
+router.get('/', advancedResults(Route, [
   { path: 'stops' },
   { path: 'schedule' },
   { path: 'fare' },
@@ -27,7 +27,7 @@ router.post('/', protect, authorize('admin'), createCourse);
 
 router
   .route('/:id')
-  .get(advancedResults(Course, [
+  .get(advancedResults(Route, [
     { path: 'stops' },
     { path: 'schedule' },
     { path: 'fare' },

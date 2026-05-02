@@ -3,7 +3,7 @@ const colors = require('colors');
 const dotenv = require('dotenv');
 const BackgroundJobService = require('../services/backgroundJobService');
 const Vehicle = require('../models/Vehicle');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Driver = require('../models/Driver');
 
 // Load env vars
@@ -95,7 +95,7 @@ const demonstrateNewDataHandling = async () => {
     // Example 2: Create a new course/route
     console.log('\n🆕 Example 2: Creating a new course...'.cyan);
     
-    const newCourse = await Course.create({
+    const newCourse = await Route.create({
       routeName: 'Nairobi CBD - Test Route',
       routeNumber: 'NT001',
       description: 'Test route for demonstration',
@@ -238,7 +238,7 @@ const demonstrateNewDataHandling = async () => {
     // Cleanup
     console.log('\n🧹 Cleaning up test data...'.yellow);
     await Vehicle.findByIdAndDelete(newVehicle._id);
-    await Course.findByIdAndDelete(newCourse._id);
+    await Route.findByIdAndDelete(newCourse._id);
     await Driver.findByIdAndDelete(newDriver._id);
     
     // Stop background jobs

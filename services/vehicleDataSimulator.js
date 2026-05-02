@@ -1,7 +1,7 @@
 const Vehicle = require('../models/Vehicle');
 const LocationTrigger = require('../models/LocationTrigger');
 const LocationTriggerService = require('./locationTriggerService');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const eventBus = require('../utils/eventBus');
 
 class VehicleDataSimulator {
@@ -265,7 +265,7 @@ class VehicleDataSimulator {
       }).populate('assignedRoute currentDriver');
       
       // Get all courses for route information
-      this.courses = await Course.find({ status: 'Active' });
+      this.courses = await Route.find({ status: 'Active' });
       
       console.log(`VehicleDataSimulator initialized with ${this.vehicles.length} vehicles`);
       console.log(`Found ${this.courses.length} active routes/courses`);
@@ -464,7 +464,7 @@ class VehicleDataSimulator {
       
       if (vehicle.assignedRoute && vehicle.assignedRoute.stops && vehicle.assignedRoute.stops.length > 0) {
         // Get route stops
-        const routeStops = await Course.findById(vehicle.assignedRoute._id).populate('stops');
+        const routeStops = await Route.findById(vehicle.assignedRoute._id).populate('stops');
         
         if (routeStops && routeStops.stops.length > 0) {
           // Calculate route-based location

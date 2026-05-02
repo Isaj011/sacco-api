@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Course = require('./models/Course');
+const Route = require('./models/Route');
 
 // Load environment variables
 dotenv.config({ path: './config/config.env' });
@@ -116,10 +116,10 @@ const seedRoutes = async () => {
   await connectDB();
 
   try {
-    await Course.deleteMany();
+    await Route.deleteMany();
     console.log('Old courses removed.');
 
-    await Course.insertMany(sampleCourses);
+    await Route.insertMany(sampleCourses);
     console.log('Courses seeded successfully.');
   } catch (err) {
     console.error('Seeding failed:', err);

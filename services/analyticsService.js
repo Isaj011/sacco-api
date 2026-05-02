@@ -1,6 +1,6 @@
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Fare = require('../models/Fare');
 const Performance = require('../models/Performance');
 const VehicleLocationHistory = require('../models/VehicleLocationHistory');
@@ -107,7 +107,7 @@ class AnalyticsService {
 
   // Business Intelligence
   async getBusinessIntelligence() {
-    const routes = await Course.find().populate('assignedVehicles');
+    const routes = await Route.find().populate('assignedVehicles');
     const locationHistory = await VehicleLocationHistory.find({
       timestamp: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
     });
@@ -335,7 +335,7 @@ class AnalyticsService {
   }
 
   async getRoutePerformance() {
-    const routes = await Course.find().populate('assignedVehicles');
+    const routes = await Route.find().populate('assignedVehicles');
     
     return routes.map(route => ({
       routeId: route._id,
@@ -363,7 +363,7 @@ class AnalyticsService {
   }
 
   async getPerRouteCosts() {
-    const routes = await Course.find();
+    const routes = await Route.find();
     
     return routes.map(route => ({
       routeId: route._id,

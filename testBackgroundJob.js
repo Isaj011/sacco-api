@@ -11,7 +11,7 @@ dotenv.config({ path: './config/config.env' });
 require('./models/User');
 require('./models/Driver');
 require('./models/Vehicle');
-require('./models/Course');
+require('./models/Route');
 require('./models/Stop');
 require('./models/DriverAssignment');
 require('./models/LocationTrigger');
@@ -44,11 +44,11 @@ const testBackgroundJobSystem = async () => {
     
     // Step 1: Check if we have vehicles and routes
     const Vehicle = require('./models/Vehicle');
-    const Course = require('./models/Course');
+    const Route = require('./models/Route');
     const Driver = require('./models/Driver');
     
     const vehicles = await Vehicle.find({ status: { $in: ['in_use', 'available'] } }).populate('assignedRoute currentDriver');
-    const courses = await Course.find({ status: 'Active' });
+    const courses = await Route.find({ status: 'Active' });
     const drivers = await Driver.find({ status: { $in: ['active', 'assigned'] } });
     
     console.log('\n📊 Current System Status:'.yellow);

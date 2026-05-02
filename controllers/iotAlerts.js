@@ -2,7 +2,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const IoT = require('../models/IoT');
 const Vehicle = require('../models/Vehicle');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Alert = require('../models/Alert');
 const {
     detectRouteDeviations,

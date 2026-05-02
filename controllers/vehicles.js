@@ -2,7 +2,7 @@ const path = require('path')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const Vehicle = require('../models/Vehicle')
-const Course = require('../models/Course')
+const Route = require('../models/Route')
 const Driver = require('../models/Driver')
 const VehicleLocationHistory = require('../models/VehicleLocationHistory')
 // @desc      Get all vehicles
@@ -180,7 +180,7 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
 
   // Validate assignedRoute exists if provided
   if (req.body.assignedRoute) {
-    const course = await Course.findById(req.body.assignedRoute);
+    const course = await Route.findById(req.body.assignedRoute);
     if (!course) {
       return next(
         new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)

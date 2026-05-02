@@ -10,7 +10,7 @@ const SchoolStudent = require('../models/SchoolStudent');
 const Parent = require('../models/Parent');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Incident = require('../models/Incident');
 const Alert = require('../models/Alert');
 
@@ -71,7 +71,7 @@ class DatabaseSeeder {
         this.routes = [];
         this.students = [];
         this.parents = [];
-        this.courses = [];
+        this.routes = [];
         this.incidents = [];
         this.alerts = [];
     }
@@ -88,7 +88,7 @@ class DatabaseSeeder {
             await this.seedRoutes();
             await this.seedStudents();
             await this.seedParents();
-            await this.seedCourses();
+            await this.seedRoutes();
             await this.seedIncidents();
             await this.seedAlerts();
             await this.seedRegularVehiclesAndDrivers();
@@ -108,7 +108,7 @@ class DatabaseSeeder {
 
         const models = [
             Alert, Incident, SchoolStudent, Parent, SchoolRoute,
-            SchoolDriver, SchoolVehicle, Course, Driver, Vehicle,
+            SchoolDriver, SchoolVehicle, Route, Driver, Vehicle,
             User, School
         ];
 
@@ -763,7 +763,7 @@ class DatabaseSeeder {
         console.log('✅ Parents seeded');
     }
 
-    async seedCourses() {
+    async seedRoutes() {
         console.log('🚌 Seeding courses...');
 
         let routeCounter = 1000;
@@ -774,7 +774,7 @@ class DatabaseSeeder {
                 routeCounter++;
                 const routeName = `${school.name} - ${generateRandomChoice(kenyanLocations).city} Route`;
 
-                const course = await Course.create({
+                const course = await Route.create({
                     routeName,
                     routeNumber,
                     description: `Course connecting ${school.name} to ${generateRandomChoice(kenyanLocations).city}`,
@@ -800,7 +800,7 @@ class DatabaseSeeder {
                     }
                 });
 
-                this.courses.push(course);
+                this.routes.push(course);
             }
         }
 
@@ -999,7 +999,7 @@ class DatabaseSeeder {
             const routeNumber = `R${String(generateRandomNumber(100, 999)).padStart(3, '0')}`;
             const routeName = `${generateRandomChoice(kenyanLocations).city} to ${generateRandomChoice(kenyanLocations).city} Express`;
 
-            const course = await Course.create({
+            const course = await Route.create({
                 routeName,
                 routeNumber,
                 description: `Express route between cities`,
@@ -1025,7 +1025,7 @@ class DatabaseSeeder {
                 }
             });
 
-            this.courses.push(course);
+            this.routes.push(course);
         }
 
         console.log('✅ Regular courses seeded');
@@ -1057,7 +1057,7 @@ class DatabaseSeeder {
         console.log(`Routes: ${this.routes.length}`);
         console.log(`Students: ${this.students.length}`);
         console.log(`Parents: ${this.parents.length}`);
-        console.log(`Courses: ${this.courses.length}`);
+        console.log(`Courses: ${this.routes.length}`);
         console.log(`Incidents: ${this.incidents.length}`);
         console.log(`Alerts: ${this.alerts.length}`);
 

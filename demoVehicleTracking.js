@@ -8,7 +8,7 @@ dotenv.config({ path: './config/config.env' });
 // Register all models
 require('./models/User');
 require('./models/Driver');
-require('./models/Course');
+require('./models/Route');
 require('./models/Stop');
 require('./models/DriverAssignment');
 require('./models/LocationTrigger');

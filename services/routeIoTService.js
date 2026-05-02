@@ -1,4 +1,4 @@
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Vehicle = require('../models/Vehicle');
 const IoT = require('../models/IoT');
 const PassengerEvent = require('../models/PassengerEvent');
@@ -14,7 +14,7 @@ exports.updateRouteFromIoT = async (vehicleId, iotData) => {
         const route = vehicle.assignedRoute;
 
         // Update route with real-time data
-        await Course.findByIdAndUpdate(route._id, {
+        await Route.findByIdAndUpdate(route._id, {
             currentLocation: {
                 latitude: iotData.location?.latitude || vehicle.currentLocation?.latitude,
                 longitude: iotData.location?.longitude || vehicle.currentLocation?.longitude,
@@ -84,7 +84,7 @@ exports.checkRouteAdherence = async (vehicleId, currentLocation) => {
         const route = vehicle.assignedRoute;
 
         // Get route waypoints (simplified - in real implementation, you'd have detailed route geometry)
-        const routeStops = await Course.findById(route._id).populate('stops');
+        const routeStops = await Route.findById(route._id).populate('stops');
 
         if (!routeStops.stops || routeStops.stops.length === 0) {
             return { adhering: true, deviation: 0 };
@@ -137,7 +137,7 @@ exports.calculateETA = async (vehicleId) => {
         if (!currentLocation || currentSpeed === 0) return [];
 
         // Get route stops
-        const routeWithStops = await Course.findById(route._id).populate('stops');
+        const routeWithStops = await Route.findById(route._id).populate('stops');
         if (!routeWithStops.stops || routeWithStops.stops.length === 0) return [];
 
         const etas = [];
@@ -177,7 +177,7 @@ exports.calculateETA = async (vehicleId) => {
  */
 exports.updateRoutePerformance = async (routeId, iotData) => {
     try {
-        const route = await Course.findById(routeId);
+        const route = await Route.findById(routeId);
         if (!route) return;
 
         // Get all vehicles on this route
@@ -199,7 +199,7 @@ exports.updateRoutePerformance = async (routeId, iotData) => {
         const avgPassengers = activeVehicles > 0 ? totalPassengers / activeVehicles : 0;
 
         // Update route performance
-        await Course.findByIdAndUpdate(routeId, {
+        await Route.findByIdAndUpdate(routeId, {
             'performance.averageSpeed': avgSpeed,
             currentPassengers: totalPassengers,
             'performance.activeVehicles': activeVehicles,

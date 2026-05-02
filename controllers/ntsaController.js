@@ -7,7 +7,7 @@ const Alert = require('../models/Alert');
 const School = require('../models/School');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
 const mongoose = require('mongoose');
@@ -1225,7 +1225,7 @@ exports.getCoursesCompliance = asyncHandler(async (req, res, next) => {
     const query = {};
     if (status) query.status = status;
 
-    const courses = await Course.find(query)
+    const courses = await Route.find(query)
         .populate('assignedVehicles', 'plateNumber vehicleModel seatingCapacity status')
         .populate('stops', 'stopName stopOrder coordinates')
         .populate('user', 'firstName lastName email')
@@ -1298,7 +1298,7 @@ exports.getCoursesCompliance = asyncHandler(async (req, res, next) => {
         };
     });
 
-    const total = await Course.countDocuments(query);
+    const total = await Route.countDocuments(query);
 
     res.status(200).json({
         success: true,
@@ -1316,7 +1316,7 @@ exports.getCoursesCompliance = asyncHandler(async (req, res, next) => {
 exports.getCourseByRouteNumber = asyncHandler(async (req, res, next) => {
     const { routeNumber } = req.params;
 
-    const course = await Course.findOne({
+    const course = await Route.findOne({
         routeNumber: routeNumber.toUpperCase()
     })
         .populate('assignedVehicles', 'plateNumber vehicleModel seatingCapacity status currentLocation averageSpeed')
@@ -1383,7 +1383,7 @@ exports.getFleetOverview = asyncHandler(async (req, res, next) => {
         Vehicle.countDocuments({ operationalStatus: true }),
         SchoolDriver.countDocuments(schoolId ? { school: schoolId } : {}),
         Driver.countDocuments({ status: 'active' }),
-        Course.countDocuments({ status: 'Active' })
+        Route.countDocuments({ status: 'Active' })
     ]);
 
     // Get compliance statistics

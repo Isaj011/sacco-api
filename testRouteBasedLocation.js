@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Vehicle = require('./models/Vehicle');
-const Course = require('./models/Course');
+const Route = require('./models/Route');
 const Stop = require('./models/Stop');
 
 // Connect to MongoDB
@@ -51,7 +51,7 @@ async function testRouteBasedLocation() {
     }
 
     // Create route
-    const course = new Course({
+    const course = new Route({
       routeName: 'Nairobi - Thika Test Route',
       routeNumber: 'TEST001',
       description: 'Test route for location simulation',

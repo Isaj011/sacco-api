@@ -1,4 +1,4 @@
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Vehicle = require('../models/Vehicle');
 const IoT = require('../models/IoT');
 const PassengerEvent = require('../models/PassengerEvent');
@@ -8,7 +8,7 @@ const PassengerEvent = require('../models/PassengerEvent');
  */
 exports.adjustScheduleFromIoT = async (routeId, iotData) => {
     try {
-        const route = await Course.findById(routeId);
+        const route = await Route.findById(routeId);
         if (!route) return;
 
         const currentPassengers = iotData.sensorData?.passengerCount?.current || 0;
@@ -56,7 +56,7 @@ exports.adjustScheduleFromIoT = async (routeId, iotData) => {
  */
 const updateScheduleFrequency = async (routeId, adjustmentType) => {
     try {
-        const route = await Course.findById(routeId);
+        const route = await Route.findById(routeId);
         if (!route) return;
 
         // This would typically update a separate Schedule collection
@@ -70,7 +70,7 @@ const updateScheduleFrequency = async (routeId, adjustmentType) => {
             newFrequency = Math.min(60, currentFrequency + 10); // Decrease frequency (increase interval)
         }
 
-        await Course.findByIdAndUpdate(routeId, {
+        await Route.findByIdAndUpdate(routeId, {
             scheduleFrequency: newFrequency,
             lastScheduleAdjustment: new Date(),
             scheduleAdjustmentReason: `IoT-driven ${adjustmentType} based on passenger demand`
@@ -97,7 +97,7 @@ exports.calculateDelaysFromIoT = async (vehicleId, iotData) => {
         if (!currentLocation) return [];
 
         // Get scheduled stops and times
-        const routeWithStops = await Course.findById(route._id).populate('stops');
+        const routeWithStops = await Route.findById(route._id).populate('stops');
         if (!routeWithStops.stops || routeWithStops.stops.length === 0) return [];
 
         const delays = [];
@@ -190,7 +190,7 @@ exports.notifyDelay = async (routeId, delays) => {
     try {
         if (!delays || delays.length === 0) return;
 
-        const route = await Course.findById(routeId);
+        const route = await Route.findById(routeId);
         if (!route) return;
 
         // Create delay notifications
@@ -234,7 +234,7 @@ const createScheduleAdjustmentEvent = async (routeId, adjustmentType, reason, io
  */
 exports.generateSchedulePerformance = async (routeId, timeRange) => {
     try {
-        const route = await Course.findById(routeId).populate('assignedVehicles');
+        const route = await Route.findById(routeId).populate('assignedVehicles');
         if (!route) return {};
 
         const vehicles = route.assignedVehicles;

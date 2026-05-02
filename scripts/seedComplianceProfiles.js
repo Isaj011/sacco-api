@@ -27,7 +27,7 @@ const complianceService = require('../services/complianceService');
 // ── Models ────────────────────────────────────────────────────────────────────
 // Register all models Vehicle's auto-populate hooks reference
 require('../models/IoT');
-require('../models/Course');
+require('../models/Route');
 require('../models/DriverAssignment');
 require('../models/User');
 const Vehicle       = require('../models/Vehicle');

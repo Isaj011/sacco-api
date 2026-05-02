@@ -2,7 +2,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const IoT = require('../models/IoT');
 const Vehicle = require('../models/Vehicle');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Alert = require('../models/Alert');
 const PassengerEvent = require('../models/PassengerEvent');
 const {
@@ -176,7 +176,7 @@ exports.generateIoTPerformanceReport = asyncHandler(async (req, res, next) => {
 
         // Process route-level reports if no specific vehicle
         if (!vehicleId) {
-            const routes = await Course.find({ status: 'Active' });
+            const routes = await Route.find({ status: 'Active' });
             results.routesProcessed = routes.length;
 
             for (const route of routes) {
@@ -227,7 +227,7 @@ exports.optimizeRoutesFromIoT = asyncHandler(async (req, res, next) => {
 
     try {
         // Get all active routes
-        const routes = await Course.find({ status: 'Active' }).populate('assignedVehicles');
+        const routes = await Route.find({ status: 'Active' }).populate('assignedVehicles');
         results.routesAnalyzed = routes.length;
 
         for (const route of routes) {
@@ -511,7 +511,7 @@ const analyzeRouteOptimization = async (route) => {
  */
 const applyRouteOptimization = async (routeId, optimization) => {
     try {
-        await Course.findByIdAndUpdate(routeId, {
+        await Route.findByIdAndUpdate(routeId, {
             'optimization.lastOptimized': new Date(),
             'optimization.suggestions': optimization.suggestions,
             'optimization.estimatedSavings': {
@@ -552,7 +552,7 @@ const updateRouteAnalytics = async (routeId, vehicleData) => {
         const avgSpeed = vehicleData.reduce((sum, data) =>
             sum + (data.location?.speed || 0), 0) / vehicleData.length;
 
-        await Course.findByIdAndUpdate(routeId, {
+        await Route.findByIdAndUpdate(routeId, {
             'analytics.lastUpdate': new Date(),
             'analytics.totalPassengers': totalPassengers,
             'analytics.averageSpeed': avgSpeed,

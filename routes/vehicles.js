@@ -26,7 +26,11 @@ router.use('/:vehicleId/courses', courseRouter)
 
 router
   .route('/')
-  .get(protect, scopeToSacco, advancedResults(Vehicle), getVehicles)
+  .get(protect, scopeToSacco, advancedResults(Vehicle, [
+    { path: 'currentDriver', select: 'driverName phone' },
+    { path: 'saccoOperator', select: 'name' },
+    { path: 'assignedRoute', select: 'routeName routeNumber' },
+  ]), getVehicles)
   .post(protect, authorize('publisher', 'admin'), createVehicle)
 
 router

@@ -259,11 +259,16 @@ driverAssignmentSchema.post('save', async function() {
     const Vehicle = mongoose.model('Vehicle');
     await Vehicle.findByIdAndUpdate(
       this.vehicleAssignment.busNumber,
-      { 
+      {
         currentAssignment: this._id,
         currentDriver: this.driverId,
         status: 'in_use'
       }
+    );
+    // Keep Driver.currentVehicle in sync
+    await Driver.findByIdAndUpdate(
+      this.driverId,
+      { currentVehicle: this.vehicleAssignment.busNumber }
     );
   } catch (error) {
     console.error('Error updating Vehicle driverAssignment:', error);
@@ -275,18 +280,23 @@ driverAssignmentSchema.post('remove', async function() {
   try {
     const Vehicle = mongoose.model('Vehicle');
     const vehicle = await Vehicle.findById(this.vehicleAssignment.busNumber);
-    
+
     if (vehicle) {
       // Only update vehicle if this was its current assignment
-      if (vehicle.currentAssignment && 
+      if (vehicle.currentAssignment &&
           vehicle.currentAssignment.toString() === this._id.toString()) {
         await Vehicle.findByIdAndUpdate(
           this.vehicleAssignment.busNumber,
-          { 
+          {
             $unset: { currentAssignment: 1 },
             $unset: { currentDriver: 1 },
             status: 'available'
           }
+        );
+        // Clear Driver.currentVehicle
+        await Driver.findByIdAndUpdate(
+          this.driverId,
+          { $unset: { currentVehicle: 1 } }
         );
       }
     }

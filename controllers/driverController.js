@@ -64,7 +64,8 @@ exports.getAllDrivers = async (req, res) => {
     const drivers = await Driver.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .populate('currentVehicle', 'plateNumber vehicleModel');
 
     const total = await Driver.countDocuments(query);
 

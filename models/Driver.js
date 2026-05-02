@@ -117,6 +117,11 @@ const driverSchema = new mongoose.Schema({
     ref: 'SaccoOperator',
     default: null,
   },
+  currentVehicle: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Vehicle',
+    default: null,
+  },
 }, {
   timestamps: true
 });

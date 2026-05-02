@@ -98,6 +98,7 @@ const schoolDrivers = require('./routes/schoolDriverRoutes')
 const schoolVehicles = require('./routes/schoolVehicleRoutes')
 const schoolTrips = require('./routes/schoolTrips')
 const schoolNotifications = require('./routes/schoolNotifications')
+const saccoOperators = require('./routes/saccoOperators')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -257,6 +258,7 @@ app.use('/api/v1/school-drivers', schoolDrivers)
 app.use('/api/v1/school-vehicles', schoolVehicles)
 app.use('/api/v1/school-trips', schoolTrips)
 app.use('/api/v1/school-notifications', schoolNotifications)
+app.use('/api/v1/sacco-operators', saccoOperators)
 
 // Set WebSocket instance for IoT broadcasting
 app.set('io', broadcastToSchool)

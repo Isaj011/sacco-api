@@ -85,7 +85,7 @@ class DatabaseSeeder {
             await this.seedSchools();
             await this.seedVehicles();
             await this.seedDrivers();
-            await this.seedRoutes();
+            await this.seedSchoolRoutes();
             await this.seedStudents();
             await this.seedParents();
             await this.seedRoutes();
@@ -540,7 +540,7 @@ class DatabaseSeeder {
         console.log('✅ School drivers seeded');
     }
 
-    async seedRoutes() {
+    async seedSchoolRoutes() {
         console.log('🛣️ Seeding school routes...');
 
         for (const school of this.schools) {
@@ -1057,7 +1057,6 @@ class DatabaseSeeder {
         console.log(`Routes: ${this.routes.length}`);
         console.log(`Students: ${this.students.length}`);
         console.log(`Parents: ${this.parents.length}`);
-        console.log(`Courses: ${this.routes.length}`);
         console.log(`Incidents: ${this.incidents.length}`);
         console.log(`Alerts: ${this.alerts.length}`);
 

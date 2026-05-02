@@ -65,7 +65,7 @@ const SaccoTripSchema = new mongoose.Schema({
 
   route: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Course',
+    ref: 'Route',
     default: null
   },
 

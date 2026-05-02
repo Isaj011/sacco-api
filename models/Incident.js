@@ -30,22 +30,12 @@ const IncidentSchema = new mongoose.Schema({
     default: 'reported'
   },
 
-  // Location and timing
+  // Location and timing — coords optional; address sufficient for quick reports
   location: {
-    latitude: {
-      type: Number,
-      required: true,
-      min: -90,
-      max: 90
-    },
-    longitude: {
-      type: Number,
-      required: true,
-      min: -180,
-      max: 180
-    },
-    address: String,
-    landmark: String
+    latitude:  { type: Number, min: -90,  max: 90  },
+    longitude: { type: Number, min: -180, max: 180 },
+    address:   String,
+    landmark:  String
   },
   timestamp: {
     type: Date,
@@ -53,20 +43,12 @@ const IncidentSchema = new mongoose.Schema({
     default: Date.now
   },
 
-  // Vehicle and driver information
-  vehicle: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
-    required: true
-  },
-  driver: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Driver',
-    required: true
-  },
+  // Vehicle and driver — optional on first report; assigned during investigation
+  vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle' },
+  driver:  { type: mongoose.Schema.Types.ObjectId, ref: 'Driver'  },
   route: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course'
+    ref: 'Route'
   },
 
   // Incident details

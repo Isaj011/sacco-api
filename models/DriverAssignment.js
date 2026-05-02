@@ -130,9 +130,9 @@ const driverAssignmentSchema = new mongoose.Schema({
       ref: 'Vehicle',
       required: [true, 'Bus number is required']
     },
-    routeAssigned: { 
+    routeAssigned: {
       type: mongoose.Schema.ObjectId,
-      ref: 'Course',
+      ref: 'Route',
       required: [true, 'Route assignment is required']
     },
     vehicleType: {

@@ -67,7 +67,7 @@ const VehicleSchema = new mongoose.Schema({
   // Route and operation details
   assignedRoute: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Course'
+    ref: 'Route'
   },
   averageSpeed: {
     type: Number,
@@ -265,7 +265,7 @@ const VehicleSchema = new mongoose.Schema({
     route: {
       routeId: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Course'
+        ref: 'Route'
       },
       deviation: {
         distance: Number,
@@ -352,17 +352,17 @@ VehicleSchema.pre('findOne', function (next) {
 // Middleware to update Course's assignedVehicles array
 VehicleSchema.post('save', async function (next) {
   try {
-    const Course = mongoose.model('Course');
+    const Route = mongoose.model('Route');
     if (this.isModified('assignedRoute')) {
       // Remove from old route if exists
       if (this._oldAssignedRoute) {
-        await Course.findByIdAndUpdate(
+        await Route.findByIdAndUpdate(
           this._oldAssignedRoute,
           { $pull: { assignedVehicles: this._id } }
         );
       }
       // Add to new route
-      await Course.findByIdAndUpdate(
+      await Route.findByIdAndUpdate(
         this.assignedRoute,
         { $addToSet: { assignedVehicles: this._id } }
       );

@@ -71,7 +71,6 @@ class DatabaseSeeder {
         this.routes = [];
         this.students = [];
         this.parents = [];
-        this.routes = [];
         this.incidents = [];
         this.alerts = [];
     }

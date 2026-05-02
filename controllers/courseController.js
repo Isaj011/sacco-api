@@ -1,4 +1,4 @@
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Stop = require('../models/Stop');
 const Schedule = require('../models/Schedule');
 const Fare = require('../models/Fare');
@@ -19,7 +19,7 @@ exports.getCourses = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/courses/:id
 // @access  Public
 exports.getCourse = asyncHandler(async (req, res, next) => {
-  let course = await Course.findById(req.params.id)
+  let course = await Route.findById(req.params.id)
     .populate({
       path: 'assignedVehicles',
       select: 'plateNumber vehicleModel currentLocation driverName seatingCapacity',
@@ -72,7 +72,7 @@ exports.createCourse = asyncHandler(async (req, res, next) => {
   ];
   systemFields.forEach(field => delete req.body[field]);
 
-  const course = await Course.create(req.body);
+  const course = await Route.create(req.body);
 
   res.status(201).json({
     success: true,
@@ -84,7 +84,7 @@ exports.createCourse = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/v1/courses/:id
 // @access  Private/Admin
 exports.updateCourse = asyncHandler(async (req, res, next) => {
-  let course = await Course.findById(req.params.id);
+  let course = await Route.findById(req.params.id);
 
   if (!course) {
     return next(
@@ -120,13 +120,13 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
   ];
   systemFields.forEach(field => delete req.body[field]);
 
-  course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+  course = await Route.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true
   });
 
   // Populate assignedVehicles with currentLocation and other info
-  course = await Course.findById(course._id)
+  course = await Route.findById(course._id)
     .populate({
       path: 'assignedVehicles',
       select: 'plateNumber vehicleModel currentLocation driverName seatingCapacity',
@@ -142,7 +142,7 @@ exports.updateCourse = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/courses/:id
 // @access  Private/Admin
 exports.deleteCourse = asyncHandler(async (req, res, next) => {
-  const course = await Course.findById(req.params.id);
+  const course = await Route.findById(req.params.id);
 
   if (!course) {
     return next(

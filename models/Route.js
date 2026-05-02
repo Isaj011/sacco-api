@@ -59,7 +59,7 @@ const AlertThresholdsSchema = new mongoose.Schema({
   }
 });
 
-// Main Course schema that references other sub-schemas
+// Main Route schema that references other sub-schemas
 const RouteSchema = new mongoose.Schema({
   routeName: {
     type: String,

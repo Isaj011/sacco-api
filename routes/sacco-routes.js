@@ -1,3 +1,4 @@
+// @route /api/v1/routes
 const express = require('express');
 const {
   getCourses,

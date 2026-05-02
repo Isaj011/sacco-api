@@ -9,6 +9,13 @@ const VehicleLocationHistory = require('../models/VehicleLocationHistory')
 // @route     GET  /api/v1/vehicles
 // @access    public
 exports.getVehicles = asyncHandler(async (req, res, next) => {
+  if (req.scopeFilter && Object.keys(req.scopeFilter).length > 0) {
+    const results = await Vehicle.find(req.scopeFilter)
+      .populate('currentDriver', 'driverName phone')
+      .populate('saccoOperator', 'name')
+      .lean()
+    return res.status(200).json({ success: true, count: results.length, data: results })
+  }
   res.status(200).json(res.advancedResults)
 })
 

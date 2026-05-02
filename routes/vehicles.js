@@ -19,13 +19,14 @@ const router = express.Router()
 
 const advancedResults = require('../middleware/advancedResults')
 const { protect, authorize } = require('../middleware/auth')
+const scopeToSacco = require('../middleware/scopeToSacco')
 
 //re-route into other resource routers
 router.use('/:vehicleId/courses', courseRouter)
 
 router
   .route('/')
-  .get(advancedResults(Vehicle), getVehicles)
+  .get(protect, scopeToSacco, advancedResults(Vehicle), getVehicles)
   .post(protect, authorize('publisher', 'admin'), createVehicle)
 
 router

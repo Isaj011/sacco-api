@@ -197,6 +197,7 @@ async function seedSchedules() {
 
   const created = await Schedule.insertMany(schedules);
   log.ok(`${created.length} schedules`);
+  return created;
 }
 
 // ── Delivery domain ───────────────────────────────────────────────────────────

@@ -7,13 +7,14 @@ const Alert = require('../models/Alert');
 // @route     GET  /api/v1/alerts
 // @access    Private
 exports.getAlerts = asyncHandler(async (req, res, next) => {
-  const { status, type, severity, entityType, page = 1, limit = 50, timeRange } = req.query;
-  
+  const { status, type, severity, entityType, entityId, page = 1, limit = 50, timeRange } = req.query;
+
   const filters = {};
   if (status) filters.status = status;
   if (type) filters.type = type;
   if (severity) filters.severity = severity;
   if (entityType) filters.entityType = entityType;
+  if (entityId) filters.entityId = entityId;
   if (timeRange) filters.timeRange = timeRange;
 
   const result = await alertService.getAlerts(filters, parseInt(page), parseInt(limit));
@@ -218,6 +219,35 @@ exports.bulkAcknowledgeAlerts = asyncHandler(async (req, res, next) => {
       successful: successCount,
       failed: failureCount
     }
+  });
+});
+
+// @desc      Escalate an alert
+// @route     PUT  /api/v1/alerts/:id/escalate
+// @access    Private
+exports.escalateAlert = asyncHandler(async (req, res, next) => {
+  const alert = await Alert.findById(req.params.id);
+
+  if (!alert) {
+    return next(new ErrorResponse(`Alert not found with id of ${req.params.id}`, 404));
+  }
+
+  // Store escalation details in metadata since the schema doesn't have dedicated fields
+  alert.metadata = {
+    ...((alert.metadata && typeof alert.metadata === 'object') ? alert.metadata : {}),
+    escalationLevel: (alert.metadata?.escalationLevel || 0) + 1,
+    escalatedBy: req.body.escalatedBy || req.user.id,
+    escalationReason: req.body.reason || null,
+    escalatedAt: new Date()
+  };
+
+  alert.updatedAt = new Date();
+  await alert.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    success: true,
+    data: alert,
+    message: 'Alert escalated successfully'
   });
 });
 

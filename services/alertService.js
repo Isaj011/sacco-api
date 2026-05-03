@@ -695,6 +695,7 @@ class AlertService {
     if (filters.type) query.type = filters.type;
     if (filters.severity) query.severity = filters.severity;
     if (filters.entityType) query.entityType = filters.entityType;
+    if (filters.entityId) query.entityId = filters.entityId;
     
     const alerts = await Alert.find(query)
       .populate('entityId', 'name plateNumber licenseNumber')

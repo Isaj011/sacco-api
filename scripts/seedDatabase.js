@@ -42,6 +42,7 @@ const DeliveryVehicle        = require('../models/DeliveryVehicle');
 const DeliveryDriver         = require('../models/DeliveryDriver');
 const DeliveryOrder          = require('../models/DeliveryOrder');
 const SaccoOperator          = require('../models/SaccoOperator');
+const Route                  = require('../models/Route');
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const NAIROBI_CENTER = { lat: -1.2921, lng: 36.8219 };
@@ -162,9 +163,9 @@ async function seedSaccoOperators(vehicles, routes) {
     log.ok(`Linked ${vehicles.length} vehicles to operators`);
   }
 
-  // Distribute routes evenly across operators
-  const Route = require('../models/Route');
-  const routeUpdates = routes.map((r, i) => ({
+  // Distribute only SACCO routes (not SchoolRoute) across operators
+  const saccoRoutes = routes.filter(r => r.constructor.modelName === 'Route');
+  const routeUpdates = saccoRoutes.map((r, i) => ({
     updateOne: {
       filter: { _id: r._id },
       update: { $set: { saccoOperator: operators[i % operators.length]._id } },
@@ -172,7 +173,7 @@ async function seedSaccoOperators(vehicles, routes) {
   }));
   if (routeUpdates.length > 0) {
     await Route.bulkWrite(routeUpdates);
-    log.ok(`Linked ${routes.length} routes to operators`);
+    log.ok(`Linked ${saccoRoutes.length} SACCO routes to operators`);
   }
 
   return operators;

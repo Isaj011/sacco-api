@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
 const alertService = require('../services/alertService');
@@ -14,7 +15,12 @@ exports.getAlerts = asyncHandler(async (req, res, next) => {
   if (type) filters.type = type;
   if (severity) filters.severity = severity;
   if (entityType) filters.entityType = entityType;
-  if (entityId) filters.entityId = entityId;
+  if (entityId) {
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return next(new ErrorResponse('Invalid entityId', 400));
+    }
+    filters.entityId = entityId;
+  }
   if (timeRange) filters.timeRange = timeRange;
 
   const result = await alertService.getAlerts(filters, parseInt(page), parseInt(limit));

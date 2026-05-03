@@ -44,6 +44,7 @@ const DeliveryOrder          = require('../models/DeliveryOrder');
 const SaccoOperator          = require('../models/SaccoOperator');
 const Route                  = require('../models/Route');
 const Schedule               = require('../models/Schedule');
+const DailyAnalytics         = require('../models/DailyAnalytics');
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const NAIROBI_CENTER = { lat: -1.2921, lng: 36.8219 };
@@ -384,6 +385,47 @@ async function seedComplianceProfiles() {
   log.ok(`${total} compliance profiles total`);
 }
 
+// ── Daily Analytics (30 days per vehicle) ─────────────────────────────────────
+
+async function seedDailyAnalytics(vehicles) {
+  log.section('Daily Analytics');
+
+  await DailyAnalytics.deleteMany({});
+
+  const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const docs  = [];
+  const now   = new Date();
+
+  for (const vehicle of vehicles) {
+    for (let d = 29; d >= 0; d--) {
+      const date = new Date(now);
+      date.setUTCHours(0, 0, 0, 0);
+      date.setUTCDate(date.getUTCDate() - d);
+
+      const trips     = rand(6, 14);
+      const passengers = rand(60, 160);
+      const collected  = rand(3500, 9000);
+
+      docs.push({
+        domain:      'sacco',
+        entityType:  'vehicle',
+        entityId:    vehicle._id,
+        date,
+        trips:      { total: trips, completed: trips - rand(0, 1), cancelled: rand(0, 1), totalDistanceKm: rand(80, 200), totalDurationMin: rand(240, 480) },
+        passengers: { boarded: passengers, alighted: passengers - rand(0, 5), peak: rand(12, 20) },
+        revenue:    { collected, reported: collected - rand(-200, 200), variance: rand(-200, 200) },
+        violations: { speed: rand(0, 2), overloading: rand(0, 1), routeDeviation: rand(0, 1), operatingHours: 0 },
+        eventCount:  rand(20, 60),
+        lastUpdated: date,
+      });
+    }
+  }
+
+  await DailyAnalytics.insertMany(docs, { ordered: false });
+  log.ok(`${docs.length} daily analytics records (${vehicles.length} vehicles × 30 days)`);
+  return docs;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -422,6 +464,9 @@ async function main() {
 
   // ── 6. Compliance profiles ────────────────────────────────────────────────
   await seedComplianceProfiles();
+
+  // ── 7. Daily Analytics ────────────────────────────────────────────────────
+  await seedDailyAnalytics(seeder.vehicles);
 
   console.log('\n╔══════════════════════════════════════════════════════╗');
   console.log('║  Seed complete — restart the server to pick up data ║');

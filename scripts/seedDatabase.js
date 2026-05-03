@@ -43,6 +43,7 @@ const DeliveryDriver         = require('../models/DeliveryDriver');
 const DeliveryOrder          = require('../models/DeliveryOrder');
 const SaccoOperator          = require('../models/SaccoOperator');
 const Route                  = require('../models/Route');
+const Schedule               = require('../models/Schedule');
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const NAIROBI_CENTER = { lat: -1.2921, lng: 36.8219 };
@@ -177,6 +178,25 @@ async function seedSaccoOperators(vehicles, routes) {
   }
 
   return operators;
+}
+
+// ── Schedules ─────────────────────────────────────────────────────────────────
+
+async function seedSchedules() {
+  log.section('Schedules');
+
+  await Schedule.deleteMany({});
+
+  const schedules = [
+    { startTime: '06:00', endTime: '09:00', frequency: 15, isActive: true },
+    { startTime: '07:00', endTime: '10:00', frequency: 20, isActive: true },
+    { startTime: '12:00', endTime: '14:00', frequency: 30, isActive: true },
+    { startTime: '16:00', endTime: '19:00', frequency: 15, isActive: true },
+    { startTime: '17:00', endTime: '20:00', frequency: 20, isActive: false },
+  ];
+
+  const created = await Schedule.insertMany(schedules);
+  log.ok(`${created.length} schedules`);
 }
 
 // ── Delivery domain ───────────────────────────────────────────────────────────
@@ -389,14 +409,17 @@ async function main() {
   // ── 2. SACCO Operators ────────────────────────────────────────────────────
   await seedSaccoOperators(seeder.vehicles, seeder.routes);
 
-  // ── 3. Delivery domain ────────────────────────────────────────────────────
+  // ── 3. Schedules ──────────────────────────────────────────────────────────
+  await seedSchedules();
+
+  // ── 4. Delivery domain ────────────────────────────────────────────────────
   await clearDeliveryCollections();
   await seedDelivery();
 
-  // ── 4. Location history ───────────────────────────────────────────────────
+  // ── 5. Location history ───────────────────────────────────────────────────
   await seedLocationHistory(seeder.vehicles);
 
-  // ── 5. Compliance profiles ────────────────────────────────────────────────
+  // ── 6. Compliance profiles ────────────────────────────────────────────────
   await seedComplianceProfiles();
 
   console.log('\n╔══════════════════════════════════════════════════════╗');

@@ -13,7 +13,9 @@
     "seed:compliance": "node scripts/seedComplianceProfiles.js",
     "seed:compliance:recalculate": "node scripts/seedComplianceProfiles.js --recalculate",
     "seed:full": "node scripts/seedDatabase.js",
-    "migrate:courses-to-routes": "node scripts/migrateCoursesToRoutes.js"
+    "migrate:courses-to-routes": "node scripts/migrateCoursesToRoutes.js",
+    "seed:routes": "node seed/seedRoutes.js",
+    "seed:routes-only": "node seed/seedRoutes.js --routes-only"
   },
   "author": "jaybantu",
   "license": "ISC",

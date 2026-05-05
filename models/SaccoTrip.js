@@ -80,6 +80,24 @@ const SaccoTripSchema = new mongoose.Schema({
     default: 'in_progress'
   },
 
+  direction: {
+    type: String,
+    enum: ['outbound', 'inbound'],
+    default: 'outbound'
+  },
+
+  tripType: {
+    type: String,
+    enum: ['fleet', 'school_pickup', 'school_dropoff'],
+    default: 'fleet'
+  },
+
+  dataSource: {
+    type: String,
+    enum: ['simulator', 'iot'],
+    default: 'simulator'
+  },
+
   startedAt: Date,
   endedAt: Date,
 

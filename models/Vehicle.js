@@ -46,6 +46,13 @@ const VehicleSchema = new mongoose.Schema({
       default: Date.now,
     }
   },
+  simState: {
+    waypointIdx:   { type: Number, default: 0 },
+    direction:     { type: Number, default: 1 },
+    layoverUntil:  { type: Date,   default: null },
+    currentTripId: { type: mongoose.Schema.ObjectId, default: null },
+    dataSource:    { type: String, enum: ['simulator', 'iot'], default: 'simulator' },
+  },
 
   // Driver and capacity information
   currentDriver: {

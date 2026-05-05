@@ -88,9 +88,22 @@ const RouteSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'Stop'
   }],
+  waypoints: {
+    type: [[Number]],
+    default: [],
+  },
+  stopWaypointIndices: {
+    type: [Number],
+    default: [],
+  },
   fare: {
     type: mongoose.Schema.ObjectId,
     ref: 'Fare'
+  },
+  routeType: {
+    type: String,
+    enum: ['fleet', 'school'],
+    default: 'fleet',
   },
   status: {
     type: String,

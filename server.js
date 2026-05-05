@@ -58,6 +58,7 @@ mongoose.connection.once('open', async () => {
         const success = await bgService.initialize();
         if (success) {
             bgService.startSimulationJob();
+            bgService.startIoTFallbackJob();
             console.log('✅ Vehicle simulator auto-started'.green);
         } else {
             console.warn('⚠️  Simulator init skipped — no vehicles in DB (run npm run seed first)'.yellow);

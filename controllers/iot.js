@@ -1,5 +1,6 @@
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const eventBus = require('../utils/eventBus');
 const IoT = require('../models/IoT');
 const Vehicle = require('../models/Vehicle');
 const VehicleLocationHistory = require('../models/VehicleLocationHistory');
@@ -36,6 +37,11 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     let vehicle = null;
     if (vehicleStatus && vehicleStatus.vehicleId) {
         vehicle = await Vehicle.findById(vehicleStatus.vehicleId);
+
+        // Switch vehicle to real IoT mode — simulator will skip it
+        if (vehicle && vehicle.simState?.dataSource !== 'iot') {
+            await Vehicle.findByIdAndUpdate(vehicle._id, { 'simState.dataSource': 'iot' })
+        }
     }
 
     let eventsGenerated = [];
@@ -49,6 +55,19 @@ exports.receiveIoTData = asyncHandler(async (req, res, next) => {
     if (vehicle && location) {
         await updateVehicleLocation(vehicle._id, location, deviceId);
         locationUpdated = true;
+        eventBus.emit('vehicle_updated', {
+            vehicleId: vehicle._id.toString(),
+            plateNumber: vehicle.plateNumber,
+            vehicleModel: vehicle.vehicleModel,
+            location: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                updatedAt: new Date(),
+            },
+            speed: vehicleStatus?.speed ?? location.speed ?? 0,
+            heading: location.heading ?? 0,
+            status: vehicle.status,
+        });
     }
 
     // 2. Process sensor data and generate passenger events

@@ -213,7 +213,7 @@ class BackgroundJobService {
 
   // Reset vehicles that haven't sent a real IoT ping in the last 5 minutes back to simulator mode
   startIoTFallbackJob() {
-    cron.schedule('*/5 * * * *', async () => {
+    this.iotFallbackJob = cron.schedule('*/5 * * * *', async () => {
       try {
         const cutoff = new Date(Date.now() - 5 * 60 * 1000)
         await Vehicle.updateMany(
@@ -223,7 +223,8 @@ class BackgroundJobService {
       } catch (err) {
         console.error('[iot-fallback]', err.message)
       }
-    }, { timezone: 'Africa/Nairobi' })
+    }, { scheduled: false, timezone: 'Africa/Nairobi' })
+    this.iotFallbackJob.start()
   }
 
   // Start all jobs
@@ -248,6 +249,7 @@ class BackgroundJobService {
       console.log(`⏹️ Stopped ${jobName} job`);
     }
     this.jobs.clear();
+    this.iotFallbackJob?.stop();
     this.simulator.stop();
     console.log('⏹️ All background jobs stopped');
   }

@@ -7,7 +7,7 @@
  *   --routes-only   Update waypoints on existing routes, skip vehicle stagger reset
  */
 
-require('dotenv').config()
+require('dotenv').config({ path: require('path').join(__dirname, '../config/config.env') })
 const mongoose   = require('mongoose')
 const https      = require('https')
 const Route      = require('../models/Route')
@@ -77,9 +77,9 @@ async function seedRoutes() {
     const stopDocs = []
     for (const s of def.stops) {
       const doc = await Stop.findOneAndUpdate(
-        { stopName: s.stopName, stopOrder: s.stopOrder },
+        { stopId: s.stopId },
         { ...s },
-        { upsert: true, new: true }
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       )
       stopDocs.push(doc)
     }

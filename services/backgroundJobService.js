@@ -76,8 +76,8 @@ class BackgroundJobService {
     // Start the simulator
     this.simulator.start();
 
-    // Schedule the data simulation to run every 30 seconds
-    const simulationJob = cron.schedule('*/30 * * * * *', async () => {
+    // Schedule the data simulation to run every 10 seconds
+    const simulationJob = cron.schedule('*/10 * * * * *', async () => {
       // Check if we need to refresh data (every 5 minutes)
       if (this.shouldRefresh()) {
         await this.refreshData();

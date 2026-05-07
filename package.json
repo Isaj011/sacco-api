@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
-    "seed": "node seed/runSeeder.js",
+    "seed": "node seed/runSeeder.js && node seed/migrateSchoolRoutes.js && node seed/seedRoutes.js && node seed/syncVehicleLocations.js",
     "seed:old": "node seeder.js -i",
     "seed:triggers": "node seedLocationTriggers.js",
     "test:background": "node testBackgroundJob.js",

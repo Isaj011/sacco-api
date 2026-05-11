@@ -18,9 +18,7 @@ const Route = require('../models/Route');
 // Apply advanced results middleware to GET all courses
 router.get('/', protect, scopeToSacco, advancedResults(Route, [
   { path: 'stops' },
-  { path: 'schedule' },
   { path: 'fare' },
-  { path: 'performance' },
   { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
   { path: 'user', select: 'name email' }
 ]), getCourses);
@@ -31,9 +29,7 @@ router
   .route('/:id')
   .get(advancedResults(Route, [
     { path: 'stops' },
-    { path: 'schedule' },
     { path: 'fare' },
-    { path: 'performance' },
     { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
     { path: 'user', select: 'name email' }
   ]), getCourse)

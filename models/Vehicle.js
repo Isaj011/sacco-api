@@ -342,24 +342,6 @@ VehicleSchema.methods.updateStatus = async function (newStatus, reason, updatedB
   return this.save();
 };
 
-// Populate middleware
-VehicleSchema.pre('find', function (next) {
-  this.populate([
-    { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
-  ]);
-  next();
-});
-
-VehicleSchema.pre('findOne', function (next) {
-  this.populate([
-    { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
-  ]);
-  next();
-});
 
 // Middleware to update Course's assignedVehicles array
 VehicleSchema.post('save', async function (next) {

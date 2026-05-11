@@ -14,12 +14,12 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.route('/')
-    .post(authorize('admin', 'manager'), createSchoolRoute)
-    .get(authorize('admin', 'manager', 'supervisor'), getSchoolRoutes);
+    .post(authorize('admin', 'staff'), createSchoolRoute)
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getSchoolRoutes);
 
 router.route('/:routeId')
-    .get(authorize('admin', 'manager', 'supervisor'), getSchoolRoute)
-    .put(authorize('admin', 'manager'), updateSchoolRoute)
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getSchoolRoute)
+    .put(authorize('admin', 'staff'), updateSchoolRoute)
     .delete(authorize('admin'), deleteSchoolRoute);
 
 module.exports = router;

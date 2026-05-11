@@ -17,25 +17,25 @@ router.use(protect);
 
 // Individual trip routes (accessible by drivers for their assigned trips)
 router.route('/:id')
-    .get(authorize('admin', 'manager', 'supervisor', 'driver'), getSchoolTrip);
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst', 'driver'), getSchoolTrip);
 
 // Trip actions (driver accessible)
 router.route('/:id/start')
-    .post(authorize('admin', 'manager', 'driver'), startTrip);
+    .post(authorize('admin', 'staff', 'driver'), startTrip);
 
 router.route('/:id/end')
-    .post(authorize('admin', 'manager', 'driver'), endTrip);
+    .post(authorize('admin', 'staff', 'driver'), endTrip);
 
 router.route('/:id/pickup')
-    .post(authorize('admin', 'manager', 'driver'), pickupStudent);
+    .post(authorize('admin', 'staff', 'driver'), pickupStudent);
 
 router.route('/:id/dropoff')
-    .post(authorize('admin', 'manager', 'driver'), dropOffStudent);
+    .post(authorize('admin', 'staff', 'driver'), dropOffStudent);
 
 router.route('/:id/events')
-    .post(authorize('admin', 'manager', 'driver'), addTripEvent);
+    .post(authorize('admin', 'staff', 'driver'), addTripEvent);
 
 router.route('/:id/delay')
-    .post(authorize('admin', 'manager', 'driver'), addTripDelay);
+    .post(authorize('admin', 'staff', 'driver'), addTripDelay);
 
 module.exports = router;

@@ -16,6 +16,7 @@ exports.getCourses = asyncHandler(async (req, res, next) => {
 // @access  Public
 exports.getCourse = asyncHandler(async (req, res, next) => {
   let course = await Route.findById(req.params.id)
+    .populate({ path: 'stops' })
     .populate({
       path: 'assignedVehicles',
       select: 'plateNumber vehicleModel currentLocation driverName seatingCapacity',

@@ -27,11 +27,15 @@ try {
 
     req.user = await User.findById(decoded.id)
 
+    if (!req.user) {
+      return next(new ErrorResponse("User no longer exists", 401))
+    }
+
     next()
-    
+
 } catch (err) {
     return next(new ErrorResponse("Not authorized to access this route", 401))
-    
+
 }
 })
 
@@ -39,8 +43,8 @@ try {
 //Grant access to specific roles
 exports.authorize = (...roles)=>{
   return(req,res,next)=>{
-    if(!roles.includes(req.user.role)){
-      return next(new ErrorResponse(`User role ${req.user.role} is not authorized to access this route`, 403))
+    if (!req.user || !roles.includes(req.user.role)){
+      return next(new ErrorResponse(`Not authorized to access this route`, 403))
     }
     next()
   }

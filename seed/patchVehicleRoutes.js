@@ -10,14 +10,11 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../config/config.env') })
 const mongoose = require('mongoose')
 
-// Register all models so Mongoose refs resolve cleanly
-require('../models/User')
-require('../models/Driver')
-require('../models/Stop')
-require('../models/Route')
-require('../models/SaccoTrip')
-require('../models/Vehicle')
-require('../models/VehicleLocationHistory')
+// Register every model so Mongoose refs resolve cleanly
+const fs = require('fs')
+fs.readdirSync(require('path').join(__dirname, '../models'))
+  .filter(f => f.endsWith('.js'))
+  .forEach(f => require(`../models/${f}`))
 
 const Vehicle = require('../models/Vehicle')
 const Route   = require('../models/Route')

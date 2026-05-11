@@ -28,15 +28,15 @@ router.use(protect);
 
 // Main notification routes
 router.route('/')
-    .get(authorize('admin', 'manager', 'supervisor'), getSchoolNotifications)
-    .post(authorize('admin', 'manager'), createSchoolNotification);
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getSchoolNotifications)
+    .post(authorize('admin', 'staff'), createSchoolNotification);
 
 // Statistics and filtering
 router.route('/stats')
-    .get(authorize('admin', 'manager', 'supervisor'), getNotificationStatistics);
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getNotificationStatistics);
 
 router.route('/filter')
-    .get(authorize('admin', 'manager', 'supervisor'), getNotificationsByTypeAndPriority);
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getNotificationsByTypeAndPriority);
 
 // User-specific routes
 router.route('/my')
@@ -47,19 +47,19 @@ router.route('/my/unread')
 
 // Individual notification routes
 router.route('/:id')
-    .get(authorize('admin', 'manager', 'supervisor'), getSchoolNotification)
-    .put(authorize('admin', 'manager'), updateSchoolNotification)
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getSchoolNotification)
+    .put(authorize('admin', 'staff'), updateSchoolNotification)
     .delete(authorize('admin'), deleteSchoolNotification);
 
 // Notification actions
 router.route('/:id/send')
-    .post(authorize('admin', 'manager'), sendNotification);
+    .post(authorize('admin', 'staff'), sendNotification);
 
 router.route('/:id/schedule')
-    .post(authorize('admin', 'manager'), scheduleNotification);
+    .post(authorize('admin', 'staff'), scheduleNotification);
 
 router.route('/:id/cancel')
-    .post(authorize('admin', 'manager'), cancelNotification);
+    .post(authorize('admin', 'staff'), cancelNotification);
 
 router.route('/:id/delivered')
     .post(markAsDelivered);
@@ -72,12 +72,12 @@ router.route('/:id/click')
 
 // Recipient management
 router.route('/:id/recipients')
-    .post(authorize('admin', 'manager'), addRecipient);
+    .post(authorize('admin', 'staff'), addRecipient);
 
 router.route('/:id/recipients/:userId')
-    .delete(authorize('admin', 'manager'), removeRecipient);
+    .delete(authorize('admin', 'staff'), removeRecipient);
 
 router.route('/:id/recipients/:userId/preferences')
-    .put(authorize('admin', 'manager'), updateRecipientPreferences);
+    .put(authorize('admin', 'staff'), updateRecipientPreferences);
 
 module.exports = router;

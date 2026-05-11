@@ -7,6 +7,7 @@ const SchoolVehicle = require('../models/SchoolVehicle');
 const SchoolDriver = require('../models/SchoolDriver');
 const SchoolRoute = require('../models/SchoolRoute');
 const SchoolStudent = require('../models/SchoolStudent');
+const SchoolTrip = require('../models/SchoolTrip');
 const Parent = require('../models/Parent');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
@@ -71,6 +72,7 @@ class DatabaseSeeder {
         this.routes = [];
         this.students = [];
         this.parents = [];
+        this.trips = [];
         this.incidents = [];
         this.alerts = [];
     }
@@ -87,6 +89,7 @@ class DatabaseSeeder {
             await this.seedSchoolRoutes();
             await this.seedStudents();
             await this.seedParents();
+            await this.seedSchoolTrips();
             await this.seedRoutes();
             await this.seedIncidents();
             await this.seedAlerts();
@@ -106,7 +109,7 @@ class DatabaseSeeder {
         console.log('🧹 Clearing existing data...');
 
         const models = [
-            Alert, Incident, SchoolStudent, Parent, SchoolRoute,
+            Alert, Incident, SchoolTrip, SchoolStudent, Parent, SchoolRoute,
             SchoolDriver, SchoolVehicle, Route, Driver, Vehicle,
             User, School
         ];
@@ -749,9 +752,20 @@ class DatabaseSeeder {
                     }
                 });
 
-                // Update student with parent reference
+                // Embed parent contact directly in student record (schema: relation, name, phone required)
+                const embedPhone = `+254-7${generateRandomNumber(10, 99)}-${generateRandomNumber(100, 999)}-${generateRandomNumber(100, 999)}`;
                 await SchoolStudent.findByIdAndUpdate(student._id, {
-                    $push: { parents: { parent: parent._id, relation } }
+                    $push: {
+                        parents: {
+                            relation,
+                            userId:    parentUser._id,
+                            name:      `${firstName} ${lastName}`,
+                            email:     parentEmail,
+                            phone:     embedPhone,
+                            isPrimary: i === 0,
+                            canPickup: true,
+                        }
+                    }
                 });
 
                 this.parents.push(parent);
@@ -760,6 +774,171 @@ class DatabaseSeeder {
         }
 
         console.log('✅ Parents seeded');
+    }
+
+    async seedSchoolTrips() {
+        console.log('🚌 Seeding school trips...');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const ydStr = yesterday.toISOString().split('T')[0].replace(/-/g, '');
+        const tdStr = today.toISOString().split('T')[0].replace(/-/g, '');
+
+        const staffUser = this.users.find(u => u.role === 'staff') ?? this.users[0];
+
+        for (const school of this.schools) {
+            const schoolRoutes   = this.routes.filter(r => r.school?.toString() === school._id.toString());
+            const schoolVehicles = this.vehicles.filter(v => v.school?.toString() === school._id.toString());
+            const schoolDrivers  = this.drivers.filter(d => d.school?.toString() === school._id.toString());
+            const schoolStudents = this.students.filter(s => s.school?.toString() === school._id.toString());
+
+            if (!schoolRoutes.length || !schoolVehicles.length || !schoolDrivers.length || !schoolStudents.length) {
+                console.warn(`⚠️  Skipping trips for ${school.name}: missing resources`);
+                continue;
+            }
+
+            const enrollSample = schoolStudents.slice(0, Math.min(6, schoolStudents.length));
+
+            // ── Trip 1: Completed (yesterday morning) ────────────────────────
+            const t1Start = new Date(yesterday); t1Start.setHours(7, 0, 0, 0);
+            const t1End   = new Date(yesterday); t1End.setHours(8, 30, 0, 0);
+
+            const trip1 = await SchoolTrip.create({
+                tripId:  `TRP-${school.code}-${ydStr}-001`,
+                school:  school._id,
+                route:   schoolRoutes[0]._id,
+                vehicle: schoolVehicles[0]._id,
+                driver:  schoolDrivers[0]._id,
+                tripType: 'morning',
+                date:     yesterday,
+                scheduledStartTime: '07:00',
+                scheduledEndTime:   '08:30',
+                actualStartTime: t1Start,
+                actualEndTime:   t1End,
+                status: 'completed',
+                enrolledStudents: enrollSample.map(s => ({
+                    student:     s._id,
+                    pickupStop:  schoolRoutes[0]._id,
+                    dropOffStop: schoolRoutes[0]._id,
+                    status:      'dropped_off',
+                    pickupTime:  new Date(t1Start.getTime() + 15 * 60000),
+                    dropOffTime: new Date(t1Start.getTime() + 80 * 60000),
+                })),
+                attendance: {
+                    totalEnrolled:   enrollSample.length,
+                    totalPickedUp:   enrollSample.length,
+                    totalDroppedOff: enrollSample.length,
+                    absent: 0,
+                },
+                metrics: {
+                    totalDistance: generateRandomNumber(15, 35),
+                    totalDuration: 90,
+                    averageSpeed:  generateRandomNumber(30, 50),
+                },
+                events: [
+                    { eventType: 'trip_started', timestamp: t1Start, description: 'Morning trip started', severity: 'low', reportedBy: staffUser._id },
+                    ...enrollSample.map((s, i) => ({
+                        eventType:      'student_picked_up',
+                        timestamp:      new Date(t1Start.getTime() + (i + 1) * 8 * 60000),
+                        description:    `${s.firstName} ${s.lastName} boarded`,
+                        severity:       'low',
+                        relatedStudent: s._id,
+                        reportedBy:     staffUser._id,
+                        metadata:       { checkInMethod: 'manual' },
+                    })),
+                    { eventType: 'trip_ended', timestamp: t1End, description: 'Morning trip completed successfully', severity: 'low', reportedBy: staffUser._id },
+                ],
+                createdBy: staffUser._id,
+            });
+            this.trips.push(trip1);
+
+            // ── Trip 2: In Progress (today morning, partial pickups) ──────────
+            const t2Start = new Date(today); t2Start.setHours(7, 15, 0, 0);
+            const route2   = schoolRoutes[Math.min(1, schoolRoutes.length - 1)];
+            const vehicle2 = schoolVehicles[Math.min(1, schoolVehicles.length - 1)];
+            const driver2  = schoolDrivers[Math.min(1, schoolDrivers.length - 1)];
+            const enrolled2  = schoolStudents.slice(0, Math.min(5, schoolStudents.length));
+            const pickedUp2  = 3;
+
+            const trip2 = await SchoolTrip.create({
+                tripId:  `TRP-${school.code}-${tdStr}-001`,
+                school:  school._id,
+                route:   route2._id,
+                vehicle: vehicle2._id,
+                driver:  driver2._id,
+                tripType: 'morning',
+                date:     today,
+                scheduledStartTime: '07:15',
+                scheduledEndTime:   '08:45',
+                actualStartTime: t2Start,
+                status: 'in_progress',
+                enrolledStudents: enrolled2.map((s, i) => ({
+                    student:     s._id,
+                    pickupStop:  route2._id,
+                    dropOffStop: route2._id,
+                    status:      i < pickedUp2 ? 'picked_up' : 'enrolled',
+                    ...(i < pickedUp2 && { pickupTime: new Date(t2Start.getTime() + (i + 1) * 10 * 60000) }),
+                })),
+                attendance: {
+                    totalEnrolled:   enrolled2.length,
+                    totalPickedUp:   pickedUp2,
+                    totalDroppedOff: 0,
+                    absent: 0,
+                },
+                events: [
+                    { eventType: 'trip_started', timestamp: t2Start, description: 'Morning trip started', severity: 'low', reportedBy: staffUser._id },
+                    ...enrolled2.slice(0, pickedUp2).map((s, i) => ({
+                        eventType:      'student_picked_up',
+                        timestamp:      new Date(t2Start.getTime() + (i + 1) * 10 * 60000),
+                        description:    `${s.firstName} ${s.lastName} boarded at stop`,
+                        severity:       'low',
+                        relatedStudent: s._id,
+                        reportedBy:     staffUser._id,
+                        metadata:       { checkInMethod: 'manual' },
+                    })),
+                ],
+                createdBy: staffUser._id,
+            });
+            this.trips.push(trip2);
+
+            // ── Trip 3: Scheduled (today afternoon) ──────────────────────────
+            const route3   = schoolRoutes[Math.min(2, schoolRoutes.length - 1)];
+            const vehicle3 = schoolVehicles[Math.min(2, schoolVehicles.length - 1)];
+            const driver3  = schoolDrivers[Math.min(2, schoolDrivers.length - 1)];
+            const enrolled3 = schoolStudents.slice(0, Math.min(6, schoolStudents.length));
+
+            const trip3 = await SchoolTrip.create({
+                tripId:  `TRP-${school.code}-${tdStr}-002`,
+                school:  school._id,
+                route:   route3._id,
+                vehicle: vehicle3._id,
+                driver:  driver3._id,
+                tripType: 'afternoon',
+                date:     today,
+                scheduledStartTime: '15:30',
+                scheduledEndTime:   '17:00',
+                status: 'scheduled',
+                enrolledStudents: enrolled3.map(s => ({
+                    student:     s._id,
+                    pickupStop:  route3._id,
+                    dropOffStop: route3._id,
+                    status:      'enrolled',
+                })),
+                attendance: {
+                    totalEnrolled:   enrolled3.length,
+                    totalPickedUp:   0,
+                    totalDroppedOff: 0,
+                    absent: 0,
+                },
+                createdBy: staffUser._id,
+            });
+            this.trips.push(trip3);
+        }
+
+        console.log(`✅ School trips seeded (${this.trips.length} trips)`);
     }
 
     async seedRoutes() {
@@ -776,6 +955,7 @@ class DatabaseSeeder {
                 const course = await Route.create({
                     routeName,
                     routeNumber,
+                    routeType: 'school',
                     description: `Course connecting ${school.name} to ${generateRandomChoice(kenyanLocations).city}`,
                     totalDistance: generateRandomNumber(15, 45),
                     estimatedDuration: `${generateRandomNumber(30, 90)} minutes`,
@@ -1056,6 +1236,7 @@ class DatabaseSeeder {
         console.log(`Routes: ${this.routes.length}`);
         console.log(`Students: ${this.students.length}`);
         console.log(`Parents: ${this.parents.length}`);
+        console.log(`School Trips: ${this.trips.length}`);
         console.log(`Incidents: ${this.incidents.length}`);
         console.log(`Alerts: ${this.alerts.length}`);
 

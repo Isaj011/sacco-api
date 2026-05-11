@@ -43,6 +43,15 @@ const UserSchema = new mongoose.Schema({
     ref: 'SaccoOperator',
     default: null,
   },
+  phone: {
+    type: String,
+    default: null,
+  },
+  school: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'School',
+    default: null,
+  },
 })
 
 //encrypt password using bcrypt

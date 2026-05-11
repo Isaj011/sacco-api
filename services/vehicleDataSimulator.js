@@ -361,7 +361,7 @@ class VehicleDataSimulator {
   async simulateData() {
     try {
       const Vehicle = require('../models/Vehicle')
-      const vehicles = await Vehicle.find({ operationalStatus: { $ne: 'Inactive' } })
+      const vehicles = await Vehicle.find({ operationalStatus: true })
         .populate('assignedRoute', 'waypoints routeType routeName')
         .lean()
 

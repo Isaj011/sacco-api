@@ -18,7 +18,8 @@ const {
     getDriverByNationalId,
     getCoursesCompliance,
     getCourseByRouteNumber,
-    getFleetOverview
+    getFleetOverview,
+    getSaccos,
 } = require('../controllers/ntsaController');
 
 const router = express.Router();
@@ -92,5 +93,9 @@ router.route('/courses/route/:routeNumber')
 // NEW: Fleet overview endpoint
 router.route('/fleet/overview')
     .get(getFleetOverview);
+
+// Sacco operators list (for filter dropdown)
+router.route('/saccos')
+    .get(getSaccos);
 
 module.exports = router;

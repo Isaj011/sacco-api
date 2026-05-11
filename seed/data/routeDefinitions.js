@@ -4,22 +4,22 @@
 
 const ROUTES = [
   {
+    // Rerouted: Utawala south via Eastern Bypass → Imara Daima → Mombasa Road → CBD
     routeNumber: 'R001',
     routeName:   'Utawala - CBD',
     routeType:   'fleet',
-    totalDistance: 22,
-    estimatedDuration: '60',
+    totalDistance: 25,
+    estimatedDuration: '65',
     stops: [
-      { stopId: 'R001-S01', stopName: 'Utawala Estate',         stopOrder: 1,  isTerminal: true,  estimatedTime: 'PT0M',  coordinates: { longitude: 36.9500, latitude: -1.2833 } },
-      { stopId: 'R001-S02', stopName: 'Utawala Market',         stopOrder: 2,  isTerminal: false, estimatedTime: 'PT5M',  coordinates: { longitude: 36.9350, latitude: -1.2850 } },
-      { stopId: 'R001-S03', stopName: 'Joska Junction',         stopOrder: 3,  isTerminal: false, estimatedTime: 'PT12M', coordinates: { longitude: 36.9200, latitude: -1.2900 } },
-      { stopId: 'R001-S04', stopName: 'Malaa',                  stopOrder: 4,  isTerminal: false, estimatedTime: 'PT20M', coordinates: { longitude: 36.9050, latitude: -1.2950 } },
-      { stopId: 'R001-S05', stopName: 'Kangundo Road Bypass',   stopOrder: 5,  isTerminal: false, estimatedTime: 'PT28M', coordinates: { longitude: 36.8900, latitude: -1.2980 } },
-      { stopId: 'R001-S06', stopName: 'Outering Road Junction', stopOrder: 6,  isTerminal: false, estimatedTime: 'PT36M', coordinates: { longitude: 36.8700, latitude: -1.2950 } },
-      { stopId: 'R001-S07', stopName: 'Harambee Estate',        stopOrder: 7,  isTerminal: false, estimatedTime: 'PT44M', coordinates: { longitude: 36.8550, latitude: -1.2900 } },
-      { stopId: 'R001-S08', stopName: 'Fire Station',           stopOrder: 8,  isTerminal: false, estimatedTime: 'PT50M', coordinates: { longitude: 36.8450, latitude: -1.2870 } },
-      { stopId: 'R001-S09', stopName: 'Railway Station',        stopOrder: 9,  isTerminal: false, estimatedTime: 'PT56M', coordinates: { longitude: 36.8350, latitude: -1.2833 } },
-      { stopId: 'R001-S10', stopName: 'CBD (Kencom)',            stopOrder: 10, isTerminal: true,  estimatedTime: 'PT60M', coordinates: { longitude: 36.8219, latitude: -1.2921 } },
+      { stopId: 'R001-S01', stopName: 'Utawala Estate',       stopOrder: 1, isTerminal: true,  estimatedTime: 'PT0M',  coordinates: { longitude: 36.9500, latitude: -1.2833 } },
+      { stopId: 'R001-S02', stopName: 'Utawala Market',       stopOrder: 2, isTerminal: false, estimatedTime: 'PT6M',  coordinates: { longitude: 36.9420, latitude: -1.2910 } },
+      { stopId: 'R001-S03', stopName: 'Eastern Bypass Jn',    stopOrder: 3, isTerminal: false, estimatedTime: 'PT15M', coordinates: { longitude: 36.9130, latitude: -1.3080 } },
+      { stopId: 'R001-S04', stopName: 'Imara Daima',          stopOrder: 4, isTerminal: false, estimatedTime: 'PT26M', coordinates: { longitude: 36.8930, latitude: -1.3200 } },
+      { stopId: 'R001-S05', stopName: 'Mombasa Rd (SGR)',     stopOrder: 5, isTerminal: false, estimatedTime: 'PT34M', coordinates: { longitude: 36.8700, latitude: -1.3185 } },
+      { stopId: 'R001-S06', stopName: 'South C',              stopOrder: 6, isTerminal: false, estimatedTime: 'PT43M', coordinates: { longitude: 36.8480, latitude: -1.3085 } },
+      { stopId: 'R001-S07', stopName: 'Nyayo Stadium',        stopOrder: 7, isTerminal: false, estimatedTime: 'PT51M', coordinates: { longitude: 36.8330, latitude: -1.3020 } },
+      { stopId: 'R001-S08', stopName: 'Globe Roundabout',     stopOrder: 8, isTerminal: false, estimatedTime: 'PT58M', coordinates: { longitude: 36.8255, latitude: -1.2960 } },
+      { stopId: 'R001-S09', stopName: 'CBD (Kencom)',          stopOrder: 9, isTerminal: true,  estimatedTime: 'PT65M', coordinates: { longitude: 36.8219, latitude: -1.2921 } },
     ],
   },
   {
@@ -38,6 +38,25 @@ const ROUTES = [
       { stopId: 'R002-S07', stopName: 'Nyayo Stadium',     stopOrder: 7, isTerminal: false, estimatedTime: 'PT36M', coordinates: { longitude: 36.8400, latitude: -1.2980 } },
       { stopId: 'R002-S08', stopName: 'Globe Roundabout',  stopOrder: 8, isTerminal: false, estimatedTime: 'PT40M', coordinates: { longitude: 36.8300, latitude: -1.2950 } },
       { stopId: 'R002-S09', stopName: 'CBD (Archives)',    stopOrder: 9, isTerminal: true,  estimatedTime: 'PT45M', coordinates: { longitude: 36.8219, latitude: -1.2921 } },
+    ],
+  },
+  {
+    // Ruai Bypass → Kangundo Road → Outer Ring → CBD
+    routeNumber: 'R003',
+    routeName:   'Ruai Bypass - CBD',
+    routeType:   'fleet',
+    totalDistance: 20,
+    estimatedDuration: '55',
+    stops: [
+      { stopId: 'R003-S01', stopName: 'Ruai Terminus',          stopOrder: 1,  isTerminal: true,  estimatedTime: 'PT0M',  coordinates: { longitude: 36.9380, latitude: -1.2975 } },
+      { stopId: 'R003-S02', stopName: 'Joska Junction',         stopOrder: 2,  isTerminal: false, estimatedTime: 'PT7M',  coordinates: { longitude: 36.9200, latitude: -1.2900 } },
+      { stopId: 'R003-S03', stopName: 'Malaa',                  stopOrder: 3,  isTerminal: false, estimatedTime: 'PT14M', coordinates: { longitude: 36.9050, latitude: -1.2950 } },
+      { stopId: 'R003-S04', stopName: 'Kangundo Rd / Bypass',   stopOrder: 4,  isTerminal: false, estimatedTime: 'PT21M', coordinates: { longitude: 36.8900, latitude: -1.2980 } },
+      { stopId: 'R003-S05', stopName: 'Outering Road Junction', stopOrder: 5,  isTerminal: false, estimatedTime: 'PT29M', coordinates: { longitude: 36.8700, latitude: -1.2950 } },
+      { stopId: 'R003-S06', stopName: 'Harambee Estate',        stopOrder: 6,  isTerminal: false, estimatedTime: 'PT36M', coordinates: { longitude: 36.8550, latitude: -1.2900 } },
+      { stopId: 'R003-S07', stopName: 'Fire Station',           stopOrder: 7,  isTerminal: false, estimatedTime: 'PT42M', coordinates: { longitude: 36.8450, latitude: -1.2870 } },
+      { stopId: 'R003-S08', stopName: 'Railway Station',        stopOrder: 8,  isTerminal: false, estimatedTime: 'PT49M', coordinates: { longitude: 36.8350, latitude: -1.2833 } },
+      { stopId: 'R003-S09', stopName: 'CBD (Kencom)',            stopOrder: 9,  isTerminal: true,  estimatedTime: 'PT55M', coordinates: { longitude: 36.8219, latitude: -1.2921 } },
     ],
   },
 ]

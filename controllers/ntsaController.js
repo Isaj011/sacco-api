@@ -8,6 +8,7 @@ const School = require('../models/School');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
 const Route = require('../models/Route');
+const SaccoOperator = require('../models/SaccoOperator');
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
 const mongoose = require('mongoose');
@@ -854,6 +855,14 @@ exports.getRouteComplianceMetrics = asyncHandler(async (req, res, next) => {
     });
 });
 
+// @desc    List all active sacco operators (for NTSA filter dropdown)
+// @route   GET /api/v1/ntsa/saccos
+// @access  Private
+exports.getSaccos = asyncHandler(async (req, res) => {
+    const saccos = await SaccoOperator.find({ status: 'active' }).sort('name').select('name registrationNumber status');
+    res.status(200).json({ success: true, count: saccos.length, data: saccos });
+});
+
 // Helper function to calculate safety compliance score
 function calculateSafetyComplianceScore(safety) {
     if (!safety) return 0;
@@ -888,25 +897,31 @@ function calculateSafetyComplianceScore(safety) {
 // @route   GET /api/v1/ntsa/vehicles/all-compliance
 // @access  Private (NTSA)
 exports.getAllVehiclesCompliance = asyncHandler(async (req, res, next) => {
-    const { status, page = 1, limit = 100 } = req.query;
+    // type: 'fleet' → only fleet vehicles | 'school' → only school vehicles | omitted → both
+    const { status, saccoId, schoolId, type, page = 1, limit = 100 } = req.query;
 
-    // Get both SchoolVehicle and existing Vehicle data
     const schoolQuery = {};
     const vehicleQuery = {};
 
-    if (status) {
-        schoolQuery.status = status;
-        vehicleQuery.status = status;
-    }
+    if (status) { schoolQuery.status = status; vehicleQuery.status = status; }
+    if (saccoId)  vehicleQuery.saccoOperator = saccoId;
+    if (schoolId) schoolQuery.school = schoolId;
+
+    const fetchFleet  = type !== 'school';
+    const fetchSchool = type !== 'fleet';
 
     const [schoolVehicles, regularVehicles] = await Promise.all([
-        SchoolVehicle.find(schoolQuery)
-            .populate('school', 'name code')
-            .populate('currentAssignment.driver', 'firstName lastName driverId')
-            .populate('currentAssignment.route', 'name routeId'),
-        Vehicle.find(vehicleQuery)
-            .populate('assignedRoute', 'routeName routeNumber')
-            .populate('currentDriver', 'driverName nationalId contactDetails')
+        fetchSchool
+            ? SchoolVehicle.find(schoolQuery)
+                .populate('school', 'name code')
+                .populate('currentAssignment.driver', 'firstName lastName driverId')
+                .populate('currentAssignment.route', 'name routeId')
+            : Promise.resolve([]),
+        fetchFleet
+            ? Vehicle.find(vehicleQuery)
+                .populate('assignedRoute', 'routeName routeNumber')
+                .populate('currentDriver', 'driverName nationalId contactDetails')
+            : Promise.resolve([]),
     ]);
 
     // Process SchoolVehicle compliance
@@ -1057,23 +1072,29 @@ exports.getVehicleByPlateNumber = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/ntsa/drivers/all-compliance
 // @access  Private (NTSA)
 exports.getAllDriversCompliance = asyncHandler(async (req, res, next) => {
-    const { status, page = 1, limit = 100 } = req.query;
+    // type: 'fleet' → only fleet drivers | 'school' → only school drivers | omitted → both
+    const { status, saccoId, schoolId, type, page = 1, limit = 100 } = req.query;
 
-    // Get both SchoolDriver and existing Driver data
     const schoolQuery = {};
     const driverQuery = {};
 
-    if (status) {
-        schoolQuery.status = status;
-        driverQuery.status = status;
-    }
+    if (status) { schoolQuery.status = status; driverQuery.status = status; }
+    if (saccoId)  driverQuery.saccoOperator = saccoId;
+    if (schoolId) schoolQuery.school = schoolId;
+
+    const fetchFleet  = type !== 'school';
+    const fetchSchool = type !== 'fleet';
 
     const [schoolDrivers, regularDrivers] = await Promise.all([
-        SchoolDriver.find(schoolQuery)
-            .populate('school', 'name code')
-            .populate('assignedVehicle', 'registrationNumber make model')
-            .populate('assignedRoute', 'name routeId'),
-        Driver.find(driverQuery)
+        fetchSchool
+            ? SchoolDriver.find(schoolQuery)
+                .populate('school', 'name code')
+                .populate('assignedVehicle', 'registrationNumber make model')
+                .populate('assignedRoute', 'name routeId')
+            : Promise.resolve([]),
+        fetchFleet
+            ? Driver.find(driverQuery)
+            : Promise.resolve([]),
     ]);
 
     // Process SchoolDriver compliance
@@ -1365,9 +1386,11 @@ exports.getCourseByRouteNumber = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/ntsa/fleet/overview
 // @access  Private (NTSA)
 exports.getFleetOverview = asyncHandler(async (req, res, next) => {
-    const { schoolId } = req.query;
+    const { schoolId, saccoId } = req.query;
 
-    // Get counts for all vehicle types
+    const schoolFilter = schoolId ? { school: schoolId } : {};
+    const fleetFilter  = saccoId  ? { saccoOperator: saccoId } : {};
+
     const [
         schoolVehicleCount,
         regularVehicleCount,
@@ -1377,12 +1400,12 @@ exports.getFleetOverview = asyncHandler(async (req, res, next) => {
         regularDriverCount,
         courseCount
     ] = await Promise.all([
-        SchoolVehicle.countDocuments(schoolId ? { school: schoolId } : {}),
-        Vehicle.countDocuments({}),
-        SchoolVehicle.countDocuments({ ...schoolId ? { school: schoolId } : {}, status: 'active' }),
-        Vehicle.countDocuments({ operationalStatus: true }),
-        SchoolDriver.countDocuments(schoolId ? { school: schoolId } : {}),
-        Driver.countDocuments({ status: 'active' }),
+        SchoolVehicle.countDocuments(schoolFilter),
+        Vehicle.countDocuments(fleetFilter),
+        SchoolVehicle.countDocuments({ ...schoolFilter, status: 'active' }),
+        Vehicle.countDocuments({ ...fleetFilter, operationalStatus: true }),
+        SchoolDriver.countDocuments(schoolFilter),
+        Driver.countDocuments({ ...fleetFilter, status: 'active' }),
         Route.countDocuments({ status: 'Active' })
     ]);
 

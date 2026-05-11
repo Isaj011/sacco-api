@@ -2,7 +2,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const IoT = require('../models/IoT');
 const Vehicle = require('../models/Vehicle');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const PassengerEvent = require('../models/PassengerEvent');
 
 /**
@@ -87,7 +87,7 @@ exports.getIoTCourseAnalytics = asyncHandler(async (req, res, next) => {
     const { timeRange = '24h' } = req.query;
 
     // Get course information
-    const course = await Course.findById(courseId).populate('assignedVehicles');
+    const course = await Route.findById(courseId).populate('assignedVehicles');
     if (!course) {
         return next(new ErrorResponse('Course not found', 404));
     }

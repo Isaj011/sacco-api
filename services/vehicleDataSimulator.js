@@ -1,7 +1,7 @@
 const Vehicle = require('../models/Vehicle');
 const LocationTrigger = require('../models/LocationTrigger');
 const LocationTriggerService = require('./locationTriggerService');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const eventBus = require('../utils/eventBus');
 
 class VehicleDataSimulator {
@@ -265,7 +265,7 @@ class VehicleDataSimulator {
       }).populate('assignedRoute currentDriver');
       
       // Get all courses for route information
-      this.courses = await Course.find({ status: 'Active' });
+      this.courses = await Route.find({ status: 'Active' });
       
       console.log(`VehicleDataSimulator initialized with ${this.vehicles.length} vehicles`);
       console.log(`Found ${this.courses.length} active routes/courses`);
@@ -298,53 +298,80 @@ class VehicleDataSimulator {
     return dataPoint;
   }
 
-  // Simulate data for all vehicles
-  async simulateData() {
-    if (!this.isRunning || this.vehicles.length === 0) {
-      return;
+  async tickVehicle(vehicle) {
+    const Route     = require('../models/Route')
+    const SaccoTrip = require('../models/SaccoTrip')
+
+    if (vehicle.simState?.dataSource === 'iot') return
+
+    const route = await Route.findById(vehicle.assignedRoute).lean()
+    if (!route || !Array.isArray(route.waypoints) || route.waypoints.length < 2) return
+
+    const waypoints  = route.waypoints
+    const total      = waypoints.length
+    const STEPS      = 3
+    const LAYOVER_MS = 3 * 60 * 1000
+
+    let { waypointIdx = 0, direction = 1, layoverUntil = null, currentTripId } = vehicle.simState ?? {}
+
+    if (layoverUntil && new Date(layoverUntil) > new Date()) return
+
+    waypointIdx += STEPS * direction
+
+    if (waypointIdx >= total - 1 || waypointIdx <= 0) {
+      waypointIdx  = waypointIdx <= 0 ? 0 : total - 1
+      direction    = -direction
+      layoverUntil = new Date(Date.now() + LAYOVER_MS)
+
+      const trip = await SaccoTrip.create({
+        vehicle:    vehicle._id,
+        route:      route._id,
+        direction:  direction === 1 ? 'outbound' : 'inbound',
+        tripType:   route.routeType === 'school' ? 'school_pickup' : 'fleet',
+        dataSource: 'simulator',
+        status:     'active',
+      })
+      currentTripId = trip._id
     }
 
-    const dataPoint = this.getNextDataPoint();
-    console.log(`\n🔄 Simulating ${this.getCurrentDataSet().name} - Data Point ${this.currentDataPointIndex + 1}/${this.getCurrentDataSet().dataPoints.length}`);
-    console.log(`📍 Location: ${dataPoint.location.latitude}, ${dataPoint.location.longitude}`);
-    console.log(`🚗 Speed: ${dataPoint.context.currentSpeed} km/h | 🧭 Heading: ${dataPoint.context.heading}°`);
-    console.log(`🌤️ Weather: ${dataPoint.context.weather.condition} | 🚦 Traffic: ${dataPoint.context.traffic.level}`);
+    const [longitude, latitude] = waypoints[waypointIdx]
 
-    // Process each vehicle
-    for (const vehicle of this.vehicles) {
-      try {
-        // Add some randomization to make each vehicle slightly different
-        const randomizedDataPoint = this.randomizeDataPoint(dataPoint, vehicle);
-        
-        // Add route information if vehicle has assigned route
-        if (vehicle.assignedRoute) {
-          randomizedDataPoint.context.route.routeId = vehicle.assignedRoute._id;
-        }
-        
-        // Update Vehicle model with comprehensive data
-        await this.updateVehicleWithFullContext(vehicle._id, randomizedDataPoint);
-        
-        // Check triggers and create history entries (this will now use the updated vehicle data)
-        const result = await LocationTriggerService.checkTrigger(
-          vehicle._id,
-          randomizedDataPoint.location,
-          randomizedDataPoint.context
-        );
+    await require('../models/Vehicle').findByIdAndUpdate(vehicle._id, {
+      'simState.waypointIdx':   waypointIdx,
+      'simState.direction':     direction,
+      'simState.layoverUntil':  layoverUntil,
+      'simState.currentTripId': currentTripId,
+      currentLocation: { latitude, longitude, updatedAt: new Date() },
+    })
 
-        if (result.activatedTriggers.length > 0) {
-          console.log(`🚨 Vehicle ${vehicle.plateNumber || vehicle._id}: ${result.activatedTriggers.length} triggers activated`);
-          result.activatedTriggers.forEach(trigger => {
-            console.log(`   - ${trigger.type} trigger: ${trigger.name || trigger._id}`);
-          });
-        }
+    const eventBus = require('../utils/eventBus')
+    eventBus.emit('vehicle_updated', {
+      vehicleId:    String(vehicle._id),
+      plateNumber:  vehicle.plateNumber,
+      vehicleModel: vehicle.vehicleModel,
+      location:     { latitude, longitude },
+      speed:        30 + Math.random() * 40,
+      heading:      direction === 1 ? 90 : 270,
+      assignedRoute:{ routeName: route.routeName },
+      status:       'active',
+    })
+  }
 
-        if (result.historyEntries.length > 0) {
-          console.log(`📝 Vehicle ${vehicle.plateNumber || vehicle._id}: ${result.historyEntries.length} history entries created`);
-        }
+  // Simulate data for all vehicles
+  async simulateData() {
+    try {
+      const Vehicle = require('../models/Vehicle')
+      const vehicles = await Vehicle.find({ operationalStatus: true })
+        .populate('assignedRoute', 'waypoints routeType routeName')
+        .lean()
 
-      } catch (error) {
-        console.error(`Error processing vehicle ${vehicle.plateNumber || vehicle._id}:`, error);
+      for (const v of vehicles) {
+        await this.tickVehicle(v).catch(err =>
+          console.error(`[sim] tickVehicle error for ${v.plateNumber}:`, err.message)
+        )
       }
+    } catch (err) {
+      console.error('[sim] simulateData error:', err.message)
     }
   }
 
@@ -464,7 +491,7 @@ class VehicleDataSimulator {
       
       if (vehicle.assignedRoute && vehicle.assignedRoute.stops && vehicle.assignedRoute.stops.length > 0) {
         // Get route stops
-        const routeStops = await Course.findById(vehicle.assignedRoute._id).populate('stops');
+        const routeStops = await Route.findById(vehicle.assignedRoute._id).populate('stops');
         
         if (routeStops && routeStops.stops.length > 0) {
           // Calculate route-based location

@@ -1,6 +1,6 @@
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 const Schedule = require('../models/Schedule');
 const Incident = require('../models/Incident');
 const PassengerFeedback = require('../models/PassengerFeedback');
@@ -387,7 +387,7 @@ class AlertService {
   async checkRouteDeviation(vehicle) {
     // Mock route deviation check
     if (vehicle.currentLocation && vehicle.assignedRoute) {
-      const route = await Course.findById(vehicle.assignedRoute);
+      const route = await Route.findById(vehicle.assignedRoute);
       if (route) {
         // Simple distance check (in real implementation, you'd use proper geospatial queries)
         const deviationThreshold = 2; // 2km
@@ -695,6 +695,7 @@ class AlertService {
     if (filters.type) query.type = filters.type;
     if (filters.severity) query.severity = filters.severity;
     if (filters.entityType) query.entityType = filters.entityType;
+    if (filters.entityId) query.entityId = filters.entityId;
     
     const alerts = await Alert.find(query)
       .populate('entityId', 'name plateNumber licenseNumber')

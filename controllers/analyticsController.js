@@ -420,8 +420,8 @@ async function getTotalDrivers() {
 }
 
 async function getTotalRoutes() {
-  const Course = require('../models/Course');
-  return await Course.countDocuments();
+  const Route = require('../models/Route');
+  return await Route.countDocuments();
 }
 
 async function getSafetyMetrics() {

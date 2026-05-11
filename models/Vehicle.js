@@ -46,6 +46,13 @@ const VehicleSchema = new mongoose.Schema({
       default: Date.now,
     }
   },
+  simState: {
+    waypointIdx:   { type: Number, default: 0 },
+    direction:     { type: Number, default: 1 },
+    layoverUntil:  { type: Date,   default: null },
+    currentTripId: { type: mongoose.Schema.ObjectId, default: null },
+    dataSource:    { type: String, enum: ['simulator', 'iot'], default: 'simulator' },
+  },
 
   // Driver and capacity information
   currentDriver: {
@@ -67,7 +74,7 @@ const VehicleSchema = new mongoose.Schema({
   // Route and operation details
   assignedRoute: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Course'
+    ref: 'Route'
   },
   averageSpeed: {
     type: Number,
@@ -265,7 +272,7 @@ const VehicleSchema = new mongoose.Schema({
     route: {
       routeId: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Course'
+        ref: 'Route'
       },
       deviation: {
         distance: Number,
@@ -304,6 +311,11 @@ const VehicleSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  saccoOperator: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SaccoOperator',
+    default: null,
+  },
 }, {
   timestamps: true
 });
@@ -330,39 +342,21 @@ VehicleSchema.methods.updateStatus = async function (newStatus, reason, updatedB
   return this.save();
 };
 
-// Populate middleware
-VehicleSchema.pre('find', function (next) {
-  this.populate([
-    { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
-  ]);
-  next();
-});
-
-VehicleSchema.pre('findOne', function (next) {
-  this.populate([
-    { path: 'assignedRoute', select: 'routeName routeNumber' },
-    { path: 'currentDriver', select: 'driverName nationalId contactDetails driverLicense psvLicense status' },
-    { path: 'currentAssignment', select: 'employeeId salary vehicleAssignment' }
-  ]);
-  next();
-});
 
 // Middleware to update Course's assignedVehicles array
 VehicleSchema.post('save', async function (next) {
   try {
-    const Course = mongoose.model('Course');
+    const Route = mongoose.model('Route');
     if (this.isModified('assignedRoute')) {
       // Remove from old route if exists
       if (this._oldAssignedRoute) {
-        await Course.findByIdAndUpdate(
+        await Route.findByIdAndUpdate(
           this._oldAssignedRoute,
           { $pull: { assignedVehicles: this._id } }
         );
       }
       // Add to new route
-      await Course.findByIdAndUpdate(
+      await Route.findByIdAndUpdate(
         this.assignedRoute,
         { $addToSet: { assignedVehicles: this._id } }
       );

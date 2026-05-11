@@ -108,10 +108,20 @@ const driverSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
-  updatedAt: { 
-    type: Date, 
-    default: Date.now 
-  }
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  saccoOperator: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'SaccoOperator',
+    default: null,
+  },
+  currentVehicle: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Vehicle',
+    default: null,
+  },
 }, {
   timestamps: true
 });

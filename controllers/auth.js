@@ -202,10 +202,22 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
 //Get token from model, response
 const sendTokenResponse = (user, statusCode, res, isFirstLogin) => {
-  //create token
   const token = user.getSignedJwtToken()
 
-  res
-    .status(statusCode)
-    .json({ success: true, token, isFirstLogin, id: user._id })
+  res.status(statusCode).json({
+    success: true,
+    token,
+    isFirstLogin,
+    id: user._id,
+    role: user.role,
+    user: {
+      id:             user._id,
+      name:           user.name,
+      email:          user.email,
+      role:           user.role,
+      phone:          user.phone,
+      school:         user.school,
+      saccoOperator:  user.saccoOperator,
+    },
+  })
 }

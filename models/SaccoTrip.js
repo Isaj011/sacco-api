@@ -65,7 +65,7 @@ const SaccoTripSchema = new mongoose.Schema({
 
   route: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Course',
+    ref: 'Route',
     default: null
   },
 
@@ -78,6 +78,24 @@ const SaccoTripSchema = new mongoose.Schema({
     type: String,
     enum: ['scheduled', 'in_progress', 'completed', 'cancelled'],
     default: 'in_progress'
+  },
+
+  direction: {
+    type: String,
+    enum: ['outbound', 'inbound'],
+    default: 'outbound'
+  },
+
+  tripType: {
+    type: String,
+    enum: ['fleet', 'school_pickup', 'school_dropoff'],
+    default: 'fleet'
+  },
+
+  dataSource: {
+    type: String,
+    enum: ['simulator', 'iot'],
+    default: 'simulator'
   },
 
   startedAt: Date,

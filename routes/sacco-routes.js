@@ -1,3 +1,4 @@
+// @route /api/v1/routes
 const express = require('express');
 const {
   getCourses,
@@ -11,14 +12,13 @@ const router = express.Router();
 
 const { protect, authorize } = require('../middleware/auth');
 const advancedResults = require('../middleware/advancedResults');
+const scopeToSacco = require('../middleware/scopeToSacco');
 const Route = require('../models/Route');
 
 // Apply advanced results middleware to GET all courses
-router.get('/', advancedResults(Route, [
+router.get('/', protect, scopeToSacco, advancedResults(Route, [
   { path: 'stops' },
-  { path: 'schedule' },
   { path: 'fare' },
-  { path: 'performance' },
   { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
   { path: 'user', select: 'name email' }
 ]), getCourses);
@@ -29,9 +29,7 @@ router
   .route('/:id')
   .get(advancedResults(Route, [
     { path: 'stops' },
-    { path: 'schedule' },
     { path: 'fare' },
-    { path: 'performance' },
     { path: 'assignedVehicles', select: 'plateNumber vehicleModel driverName seatingCapacity currentLocation' },
     { path: 'user', select: 'name email' }
   ]), getCourse)

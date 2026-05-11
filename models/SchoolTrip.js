@@ -153,7 +153,6 @@ const tripSchema = new Schema({
     },
     scheduledEndTime: {
         type: String, // "HH:MM"
-        required: true
     },
     actualStartTime: Date,
     actualEndTime: Date,
@@ -278,7 +277,7 @@ tripSchema.virtual('duration').get(function () {
 });
 
 tripSchema.virtual('isOverdue').get(function () {
-    if (this.status !== 'in_progress') return false;
+    if (this.status !== 'in_progress' || !this.scheduledEndTime) return false;
     const now = new Date();
     const scheduledEnd = new Date(this.date);
     const [hours, minutes] = this.scheduledEndTime.split(':');

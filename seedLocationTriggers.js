@@ -6,7 +6,7 @@ const { createSampleTriggers, getTriggerStats } = require('./utils/sampleLocatio
 // Register all models to avoid MissingSchemaError
 require('./models/Driver');
 require('./models/Vehicle');
-require('./models/Course');
+require('./models/Route');
 require('./models/Stop');
 require('./models/LocationTrigger');
 require('./models/VehicleLocationHistory');

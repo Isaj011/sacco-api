@@ -8,7 +8,7 @@ dotenv.config({ path: './config/config.env' })
 const User            = require('./models/User')
 const Driver          = require('./models/Driver')
 const Vehicle         = require('./models/Vehicle')
-const Course          = require('./models/Course')
+const Route           = require('./models/Route')
 const DriverAssignment= require('./models/DriverAssignment')
 const Stop            = require('./models/Stop')
 const Schedule        = require('./models/Schedule')
@@ -42,7 +42,7 @@ const destroyData = async () => {
     await connectDB()
     await Promise.all([
       User.deleteMany(), Driver.deleteMany(), Vehicle.deleteMany(),
-      Course.deleteMany(), DriverAssignment.deleteMany(), Stop.deleteMany(),
+      Route.deleteMany(), DriverAssignment.deleteMany(), Stop.deleteMany(),
       Schedule.deleteMany(), Fare.deleteMany(), Performance.deleteMany(),
       School.deleteMany(), SchoolVehicle.deleteMany(), SchoolDriver.deleteMany(),
       SchoolRoute.deleteMany(), SchoolStudent.deleteMany(), Parent.deleteMany(),
@@ -137,7 +137,7 @@ const importData = async () => {
       { routeName: 'Thika Rd – Roysambu (Route 45)',   routeNumber: '45',  desc: 'TRM Stage to Roysambu Stage',           dist: 8.1,  dur: '35 minutes' },
       { routeName: 'Ngong Rd – Dagoretti (Route 58)',  routeNumber: '58',  desc: 'Prestige Plaza to Dagoretti Corner',    dist: 9.4,  dur: '40 minutes' }
     ]
-    const courses = await Course.create(routeData.map(r => ({
+    const courses = await Route.create(routeData.map(r => ({
       routeName:         r.routeName,
       routeNumber:       r.routeNumber,
       description:       r.desc,

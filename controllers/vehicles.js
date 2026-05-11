@@ -2,13 +2,20 @@ const path = require('path')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const Vehicle = require('../models/Vehicle')
-const Course = require('../models/Course')
+const Route = require('../models/Route')
 const Driver = require('../models/Driver')
 const VehicleLocationHistory = require('../models/VehicleLocationHistory')
 // @desc      Get all vehicles
 // @route     GET  /api/v1/vehicles
 // @access    public
 exports.getVehicles = asyncHandler(async (req, res, next) => {
+  if (req.scopeFilter && Object.keys(req.scopeFilter).length > 0) {
+    const results = await Vehicle.find(req.scopeFilter)
+      .populate('currentDriver', 'driverName phone')
+      .populate('saccoOperator', 'name')
+      .lean()
+    return res.status(200).json({ success: true, count: results.length, data: results })
+  }
   res.status(200).json(res.advancedResults)
 })
 
@@ -180,7 +187,7 @@ exports.updateVehicle = asyncHandler(async (req, res, next) => {
 
   // Validate assignedRoute exists if provided
   if (req.body.assignedRoute) {
-    const course = await Course.findById(req.body.assignedRoute);
+    const course = await Route.findById(req.body.assignedRoute);
     if (!course) {
       return next(
         new ErrorResponse(`Course with ID ${req.body.assignedRoute} not found`, 404)

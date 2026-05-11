@@ -38,7 +38,7 @@ const PassengerFeedbackSchema = new mongoose.Schema({
     },
     route: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Course'
+      ref: 'Route'
     },
     tripDate: {
       type: Date,

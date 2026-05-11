@@ -5,13 +5,17 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
-    "seed": "node seed/runSeeder.js",
+    "seed": "node seed/runSeeder.js && node seed/migrateSchoolRoutes.js && node seed/seedRoutes.js && node seed/syncVehicleLocations.js",
     "seed:old": "node seeder.js -i",
     "seed:triggers": "node seedLocationTriggers.js",
     "test:background": "node testBackgroundJob.js",
     "test:newdata": "node examples/newDataHandling.js",
     "seed:compliance": "node scripts/seedComplianceProfiles.js",
-    "seed:compliance:recalculate": "node scripts/seedComplianceProfiles.js --recalculate"
+    "seed:compliance:recalculate": "node scripts/seedComplianceProfiles.js --recalculate",
+    "seed:full": "node scripts/seedDatabase.js",
+    "migrate:courses-to-routes": "node scripts/migrateCoursesToRoutes.js",
+    "seed:routes": "node seed/seedRoutes.js",
+    "seed:routes-only": "node seed/seedRoutes.js --routes-only"
   },
   "author": "jaybantu",
   "license": "ISC",

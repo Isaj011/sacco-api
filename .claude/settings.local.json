@@ -12,7 +12,24 @@
       "Bash(ls *)",
       "Bash(echo \"Exit code: $?\")",
       "Bash(xargs -I {} basename {})",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(find *)",
+      "Bash(grep -E \"^[a-z]+\\\\.\\(js|ts\\)$\")",
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(git -C \"C:/Os/Dev/Farerare/sacco-api\" add routes/courses.js controllers/courseController.js)",
+      "Bash(git -C \"C:/Os/Dev/Farerare/sacco-api\" commit -m \"fix: routes/courses.js and courseController use Route model consistently\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -v \"node_modules\\\\|\\\\.md\\\\|//.*Course\\\\|'Course\\\\|\\\\\"Course\\\\|courseController\\\\|courseId\\\\|course_\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(k+': '+v\\) for k,v in d.get\\('scripts',{}\\).items\\(\\)]\")",
+      "Bash(npm run *)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(git -C \"C:/Os/Dev/Farerare/sacco-api\" add controllers/saccoOperatorController.js routes/saccoOperators.js server.js)",
+      "Bash(git -C C:/Os/Dev/Farerare/sacco-api commit -m ' *)",
+      "Bash(git *)",
+      "Bash(npm list *)"
     ]
   }
 }

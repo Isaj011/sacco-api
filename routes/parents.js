@@ -14,12 +14,12 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.route('/')
-    .get(authorize('admin', 'manager', 'supervisor'), getParents)
-    .post(authorize('admin', 'manager'), createParent);
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getParents)
+    .post(authorize('admin', 'staff'), createParent);
 
 router.route('/:id')
-    .get(authorize('admin', 'manager', 'supervisor'), getParent)
-    .put(authorize('admin', 'manager'), updateParent)
+    .get(authorize('admin', 'staff', 'ntsa_officer', 'ntsa_inspector', 'ntsa_analyst'), getParent)
+    .put(authorize('admin', 'staff'), updateParent)
     .delete(authorize('admin'), deleteParent);
 
 module.exports = router;

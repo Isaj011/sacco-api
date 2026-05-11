@@ -1,6 +1,6 @@
 const LocationTrigger = require('../models/LocationTrigger');
 const Vehicle = require('../models/Vehicle');
-const Course = require('../models/Course');
+const Route = require('../models/Route');
 
 // Sample location triggers for testing - compatible with seeder data
 const sampleTriggers = [
@@ -251,7 +251,7 @@ async function createRouteSpecificTriggers(vehicle, createdBy) {
   
   try {
     // Get route stops for geofence triggers
-    const course = await Course.findById(vehicle.assignedRoute).populate('stops');
+    const course = await Route.findById(vehicle.assignedRoute).populate('stops');
     
     if (course && course.stops && course.stops.length > 0) {
       // Create stop arrival triggers for each stop

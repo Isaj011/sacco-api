@@ -50,9 +50,27 @@ eventBus.on('alert_created', (alert) => {
     broadcastToFleet({ type: 'ALERT_CREATED', data: alert });
 });
 
+// Auto-start vehicle simulator once DB connection is established
+mongoose.connection.once('open', async () => {
+    try {
+        const BackgroundJobService = require('./services/backgroundJobService');
+        const bgService = new BackgroundJobService();
+        const success = await bgService.initialize();
+        if (success) {
+            bgService.startSimulationJob();
+            bgService.startIoTFallbackJob();
+            console.log('✅ Vehicle simulator auto-started'.green);
+        } else {
+            console.warn('⚠️  Simulator init skipped — no vehicles in DB (run npm run seed first)'.yellow);
+        }
+    } catch (err) {
+        console.error('❌ Simulator auto-start failed:'.red, err.message);
+    }
+});
+
 //route files
 const vehicles = require('./routes/vehicles')
-const courses = require('./routes/courses')
+const saccoRoutes = require('./routes/sacco-routes')
 const auth = require('./routes/auth')
 const users = require('./routes/users')
 const stops = require('./routes/stops')
@@ -81,6 +99,7 @@ const schoolDrivers = require('./routes/schoolDriverRoutes')
 const schoolVehicles = require('./routes/schoolVehicleRoutes')
 const schoolTrips = require('./routes/schoolTrips')
 const schoolNotifications = require('./routes/schoolNotifications')
+const saccoOperators = require('./routes/saccoOperators')
 
 // Mount Swagger
 swaggerSetup(app);
@@ -211,7 +230,7 @@ app.get('/health', (req, res) => {
 
 //mount routers
 app.use('/api/v1/vehicles', vehicles)
-app.use('/api/v1/courses', courses)
+app.use('/api/v1/routes', saccoRoutes)
 app.use('/api/v1/auth', auth)
 app.use('/api/v1/users', users)
 app.use('/api/v1/stops', stops)
@@ -240,6 +259,7 @@ app.use('/api/v1/school-drivers', schoolDrivers)
 app.use('/api/v1/school-vehicles', schoolVehicles)
 app.use('/api/v1/school-trips', schoolTrips)
 app.use('/api/v1/school-notifications', schoolNotifications)
+app.use('/api/v1/sacco-operators', saccoOperators)
 
 // Set WebSocket instance for IoT broadcasting
 app.set('io', broadcastToSchool)

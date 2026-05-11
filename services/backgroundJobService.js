@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const VehicleDataSimulator = require('./vehicleDataSimulator');
+const Vehicle = require('../models/Vehicle');
 
 class BackgroundJobService {
   constructor() {
@@ -75,8 +76,8 @@ class BackgroundJobService {
     // Start the simulator
     this.simulator.start();
 
-    // Schedule the data simulation to run every 30 seconds
-    const simulationJob = cron.schedule('*/30 * * * * *', async () => {
+    // Schedule the data simulation to run every 10 seconds
+    const simulationJob = cron.schedule('*/10 * * * * *', async () => {
       // Check if we need to refresh data (every 5 minutes)
       if (this.shouldRefresh()) {
         await this.refreshData();
@@ -210,6 +211,22 @@ class BackgroundJobService {
     console.log('🏥 Health check job scheduled (every 5 minutes)');
   }
 
+  // Reset vehicles that haven't sent a real IoT ping in the last 5 minutes back to simulator mode
+  startIoTFallbackJob() {
+    this.iotFallbackJob = cron.schedule('*/5 * * * *', async () => {
+      try {
+        const cutoff = new Date(Date.now() - 5 * 60 * 1000)
+        await Vehicle.updateMany(
+          { 'simState.dataSource': 'iot', 'currentLocation.updatedAt': { $lt: cutoff } },
+          { 'simState.dataSource': 'simulator' }
+        )
+      } catch (err) {
+        console.error('[iot-fallback]', err.message)
+      }
+    }, { scheduled: false, timezone: 'Africa/Nairobi' })
+    this.iotFallbackJob.start()
+  }
+
   // Start all jobs
   startAllJobs() {
     if (!this.isInitialized) {
@@ -232,6 +249,7 @@ class BackgroundJobService {
       console.log(`⏹️ Stopped ${jobName} job`);
     }
     this.jobs.clear();
+    this.iotFallbackJob?.stop();
     this.simulator.stop();
     console.log('⏹️ All background jobs stopped');
   }

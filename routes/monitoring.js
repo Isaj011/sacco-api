@@ -19,8 +19,8 @@ const router = express.Router();
 router.use(protect);
 
 // ── Compliance overview ───────────────────────────────────────────────
-router.get('/compliance',                   authorize('admin'), getComplianceSummary);
-router.get('/compliance/:domain',           authorize('admin'), getDomainCompliance);
+router.get('/compliance',                   authorize('admin', 'ntsa_officer', 'ntsa_analyst', 'ntsa_inspector'), getComplianceSummary);
+router.get('/compliance/:domain',           authorize('admin', 'ntsa_officer', 'ntsa_analyst', 'ntsa_inspector'), getDomainCompliance);
 router.get('/compliance/entity/:entityId',  getEntityCompliance);
 
 // Manual job trigger (admin only)
@@ -32,7 +32,7 @@ router.patch('/alerts/:id/acknowledge',         acknowledgeAlert);
 router.patch('/alerts/:id/resolve',             resolveAlert);
 
 // ── NTSA feed ─────────────────────────────────────────────────────────
-router.get('/ntsa/pending', authorize('admin'), getNTSAPending);
+router.get('/ntsa/pending', authorize('admin', 'ntsa_officer', 'ntsa_analyst', 'ntsa_inspector'), getNTSAPending);
 
 // ── Analytics ─────────────────────────────────────────────────────────
 router.post('/analytics/run',           authorize('admin'), runAnalyticsJob);

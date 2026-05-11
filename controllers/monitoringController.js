@@ -17,24 +17,38 @@ const complianceMonitoringJob = require('../jobs/complianceMonitoringJob');
 exports.getComplianceSummary = asyncHandler(async (req, res) => {
   const domains = ['sacco', 'school', 'delivery'];
 
-  const summary = await Promise.all(
-    domains.map(async (domain) => {
-      const counts = await ComplianceProfile.aggregate([
-        { $match: { domain } },
-        { $group: { _id: '$complianceStatus', count: { $sum: 1 } } }
-      ]);
+  const [domainSummaries, platformCounts] = await Promise.all([
+    Promise.all(
+      domains.map(async (domain) => {
+        const counts = await ComplianceProfile.aggregate([
+          { $match: { domain } },
+          { $group: { _id: '$complianceStatus', count: { $sum: 1 } } }
+        ]);
+        const byStatus = Object.fromEntries(counts.map(c => [c._id, c.count]));
+        const total = counts.reduce((sum, c) => sum + c.count, 0);
+        return { domain, total, byStatus };
+      })
+    ),
+    ComplianceProfile.aggregate([
+      { $group: { _id: '$complianceStatus', count: { $sum: 1 } } }
+    ])
+  ]);
 
-      const byStatus = Object.fromEntries(
-        counts.map(c => [c._id, c.count])
-      );
+  const platformTotal     = platformCounts.reduce((s, c) => s + c.count, 0);
+  const compliantCount    = platformCounts.find(c => c._id === 'compliant')?.count ?? 0;
+  const nonCompliantCount = platformCounts.reduce((s, c) =>
+    ['non_compliant', 'suspended'].includes(c._id) ? s + c.count : s, 0);
+  const score = platformTotal > 0 ? Math.round((compliantCount / platformTotal) * 100) : 0;
 
-      const total = counts.reduce((sum, c) => sum + c.count, 0);
-
-      return { domain, total, byStatus };
-    })
-  );
-
-  res.status(200).json({ success: true, data: summary });
+  res.status(200).json({
+    success: true,
+    data: {
+      score,
+      nonCompliant: nonCompliantCount,
+      total: platformTotal,
+      domains: domainSummaries,
+    }
+  });
 });
 
 /**
@@ -75,10 +89,17 @@ exports.getDomainCompliance = asyncHandler(async (req, res, next) => {
     .select('entityId entityType documents')
     .limit(20);
 
+  // items: full list for the domain, ordered worst-first (for the compliance table)
+  const items = await ComplianceProfile
+    .find({ domain })
+    .select('entityId entityType complianceScore complianceStatus activeIssues lastChecked')
+    .sort({ complianceScore: 1 })
+    .limit(100);
+
   res.status(200).json({
     success: true,
     domain,
-    data: { statusCounts, nonCompliant, expiringSoon }
+    data: { statusCounts, nonCompliant, expiringSoon, items }
   });
 });
 
@@ -238,6 +259,37 @@ exports.getEntityAnalytics = asyncHandler(async (req, res) => {
   const DailyAnalytics = require('../models/DailyAnalytics');
   const days = Math.min(Number(req.query.days) || 30, 90);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // 'platform' is a special aggregation across all sacco vehicles.
+  // Output shape mirrors individual DailyAnalytics documents so the frontend
+  // can use the same field accessors (r.revenue.collected, r.trips.completed…).
+  if (req.params.entityId === 'platform') {
+    const records = await DailyAnalytics.aggregate([
+      { $match: { domain: 'sacco', date: { $gte: since } } },
+      { $group: {
+        _id:              { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+        date:             { $first: '$date' },
+        revCollected:     { $sum: '$revenue.collected' },
+        tripsCompleted:   { $sum: '$trips.completed' },
+        passBoarded:      { $sum: '$passengers.boarded' },
+        vSpeed:           { $sum: '$violations.speed' },
+        vOverload:        { $sum: '$violations.overloading' },
+        vDeviation:       { $sum: '$violations.routeDeviation' },
+        vHours:           { $sum: '$violations.operatingHours' },
+      }},
+      { $project: {
+        _id:        0,
+        date:       1,
+        revenue:    { collected: '$revCollected' },
+        trips:      { completed: '$tripsCompleted' },
+        passengers: { boarded: '$passBoarded' },
+        violations: { speed: '$vSpeed', overloading: '$vOverload', routeDeviation: '$vDeviation', operatingHours: '$vHours' },
+      }},
+      { $sort: { date: -1 } },
+      { $limit: days },
+    ]);
+    return res.status(200).json({ success: true, count: records.length, data: records });
+  }
 
   const records = await DailyAnalytics
     .find({ entityId: req.params.entityId, date: { $gte: since } })

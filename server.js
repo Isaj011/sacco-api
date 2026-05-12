@@ -105,14 +105,23 @@ const saccoOperators = require('./routes/saccoOperators')
 swaggerSetup(app);
 
 // Enable CORS for all environments
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
+  'https://fare-rari.netlify.app',
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'development'
-    ? 'http://localhost:5173'  // During development, only allow localhost
-    : [
-      'http://localhost:5173',
-      'https://sacco-3mhcvjas5-isajs-projects.vercel.app',
-      'https://fare-rari.netlify.app'
-    ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    // Allow any vercel.app or netlify.app subdomain for UAT/preview deployments
+    if (/\.vercel\.app$/.test(origin) || /\.netlify\.app$/.test(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',

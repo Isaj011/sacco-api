@@ -329,7 +329,7 @@ class VehicleDataSimulator {
         direction:  direction === 1 ? 'outbound' : 'inbound',
         tripType:   route.routeType === 'school' ? 'school_pickup' : 'fleet',
         dataSource: 'simulator',
-        status:     'active',
+        status:     'in_progress',
       })
       currentTripId = trip._id
     }

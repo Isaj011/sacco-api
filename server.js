@@ -7,7 +7,6 @@ const fileupload = require('express-fileupload');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/error');
 const connectDB = require('./config/db');
-const cors = require('cors');
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
@@ -107,7 +106,7 @@ const saccoOperators = require('./routes/saccoOperators')
 // Mount Swagger
 swaggerSetup(app);
 
-// Enable CORS for all environments
+// Manual CORS middleware — handles preflight explicitly for Vercel serverless compatibility
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -116,34 +115,25 @@ const allowedOrigins = [
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
 ];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    // Allow any vercel.app or netlify.app subdomain for UAT/preview deployments
-    if (/\.vercel\.app$/.test(origin) || /\.netlify\.app$/.test(origin)) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-  maxAge: 86400 // 24 hours
-};
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  if (/\.vercel\.app$/.test(origin)) return true;
+  if (/\.netlify\.app$/.test(origin)) return true;
+  return allowedOrigins.includes(origin);
+}
 
-// Apply CORS middleware before other middleware
-app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
 
 // Body parser
 app.use(express.json());

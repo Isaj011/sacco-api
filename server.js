@@ -35,6 +35,9 @@ connectDB()
 const app = express();
 const server = http.createServer(app);
 
+// Required for Vercel/proxy deployments — allows rate-limit and IP detection to work correctly
+app.set('trust proxy', 1);
+
 // Initialize WebSocket
 const { broadcastToSchool, broadcastToFleet } = setupWebSocket(server);
 app.set('broadcastToSchool', broadcastToSchool);
